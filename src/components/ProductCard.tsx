@@ -38,9 +38,9 @@ export default function ProductCard({ product }: { product: Product }) {
   const discount = product.oldPrice ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100) : 0
 
   return (
-    <div className="group relative flex flex-col bg-white border border-[#E8E5DE] rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300">
+    <div className="group relative flex flex-col h-full bg-white border border-[#E8E5DE] rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300">
       {/* Image */}
-      <div className="relative product-img-wrap bg-[#F8F7F3] aspect-square overflow-hidden rounded-t-xl">
+      <div className="relative product-img-wrap bg-[#F8F7F3] aspect-square overflow-hidden rounded-t-xl shrink-0">
         <Link href={`/product/${product.slug}`}>
           <img
             src={imgSrc}
@@ -65,7 +65,7 @@ export default function ProductCard({ product }: { product: Product }) {
         {/* Wishlist button */}
         <button
           onClick={() => toggleWishlist(product)}
-          className="absolute top-2 right-2 sm:top-3 sm:right-3 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/90 backdrop-blur-xs shadow-sm flex items-center justify-center opacity-90 sm:opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#F8F7F3] z-10"
+          className="absolute top-2 right-2 sm:top-3 sm:right-3 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/90 backdrop-blur-xs shadow-sm flex items-center justify-center opacity-90 sm:opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#F8F7F3] z-10 cursor-pointer"
           aria-label="Add to wishlist"
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill={inWishlist ? '#D4AF37' : 'none'} stroke={inWishlist ? '#D4AF37' : '#111111'} strokeWidth="1.5">
@@ -74,28 +74,32 @@ export default function ProductCard({ product }: { product: Product }) {
         </button>
       </div>
 
-      {/* Info */}
-      <div className="p-3 sm:p-4 flex-1 flex flex-col">
-        <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-[#6B6B6B] mb-0.5 font-semibold">{product.category}</p>
-        <Link href={`/product/${product.slug}`} className="text-xs sm:text-sm font-semibold text-[#111111] hover:text-[#D4AF37] transition-colors leading-snug line-clamp-2 mb-1">
-          {product.name}
-        </Link>
-        <div className="flex items-center gap-1.5 mb-1.5">
-          <Stars rating={product.rating} />
-          <span className="text-[9px] sm:text-[10px] text-[#6B6B6B]">({product.reviews})</span>
-        </div>
-        <div className="flex items-baseline gap-1.5 mb-3">
-          <span className="text-xs sm:text-sm font-bold text-[#111111]">Rs. {product.price.toLocaleString()}</span>
-          {product.oldPrice && (
-            <span className="text-[10px] sm:text-xs text-[#6B6B6B] line-through">Rs. {product.oldPrice.toLocaleString()}</span>
-          )}
+      {/* Info Container */}
+      <div className="p-3 sm:p-4 flex-1 flex flex-col justify-between">
+        <div>
+          <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-[#6B6B6B] mb-1 font-semibold">{product.category}</p>
+          <div className="h-9 sm:h-10 flex items-start mb-1.5 overflow-hidden">
+            <Link href={`/product/${product.slug}`} className="text-xs sm:text-sm font-semibold text-[#111111] hover:text-[#D4AF37] transition-colors leading-snug line-clamp-2">
+              {product.name}
+            </Link>
+          </div>
+          <div className="flex items-center gap-1.5 mb-2">
+            <Stars rating={product.rating} />
+            <span className="text-[9px] sm:text-[10px] text-[#6B6B6B]">({product.reviews})</span>
+          </div>
+          <div className="flex items-baseline gap-1.5 mb-3">
+            <span className="text-xs sm:text-sm font-bold text-[#111111]">Rs. {product.price.toLocaleString()}</span>
+            {product.oldPrice && (
+              <span className="text-[10px] sm:text-xs text-[#6B6B6B] line-through">Rs. {product.oldPrice.toLocaleString()}</span>
+            )}
+          </div>
         </div>
 
-        {/* Solid Black ADD TO CART button with rounded-lg styling */}
+        {/* Solid Black ADD TO CART button */}
         <button
           onClick={() => addToCart(product, product.sizes[0], product.colors[0])}
           disabled={!product.inStock}
-          className="mt-auto w-full bg-[#111111] text-white text-[9px] sm:text-[10px] tracking-widest uppercase font-semibold py-2.5 px-2 rounded-lg flex items-center justify-center gap-1.5 hover:bg-[#D4AF37] hover:text-[#111111] transition-colors disabled:opacity-50"
+          className="mt-auto w-full bg-[#111111] text-white text-[9px] sm:text-[10px] tracking-widest uppercase font-semibold py-2.5 px-2 rounded-lg flex items-center justify-center gap-1.5 hover:bg-[#D4AF37] hover:text-[#111111] transition-colors disabled:opacity-50 cursor-pointer"
         >
           <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
             <path d="M6 2 3 6v14a2 2 0 0 1 2 2h14a2 2 0 0 1 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" />
