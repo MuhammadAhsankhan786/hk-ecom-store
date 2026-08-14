@@ -62,6 +62,27 @@ body {
   width: 100%;
 }
 
+/* Continuous Infinite Auto-Marquee Carousel */
+@keyframes marquee-left {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee-continuous {
+  display: flex;
+  width: max-content;
+  animation: marquee-left 40s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-continuous:hover {
+  animation-play-state: paused;
+}
+
 /* Product image zoom */
 .product-img-wrap {
   overflow: hidden;
