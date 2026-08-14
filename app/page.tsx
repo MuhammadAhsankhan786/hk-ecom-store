@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import ProductCard from '../src/components/ProductCard'
 import { products } from '../src/data/products'
 
@@ -96,26 +98,79 @@ const reviewsData = [
     rating: 5,
     title: 'Extremely Soft & High Quality!',
     text: 'I ordered the Ruby Red & Gold Heavy Bridal Set for my wedding trousseau and I am blown away by the quality. The embroidery is so detailed and royal!',
-    product: 'Ruby Red & Gold Heavy Bridal Bedding Set',
-    date: '3 days ago',
+    product: 'Ruby Red & Gold Heavy Bridal Set',
+    date: '2 days ago',
+    avatar: 'AK',
+  },
+  {
+    name: 'Dr. Shahzaib Khan',
+    city: 'Islamabad',
+    rating: 5,
+    title: 'Super Soft Cotton Satin',
+    text: 'The 300 Thread Count digital printed bedsheet set exceeded expectations. High color fastness even after multiple washes, feels like a 5-star hotel bed.',
+    product: 'Digital Printed Cotton Satin Set',
+    date: '4 days ago',
+    avatar: 'SK',
   },
   {
     name: 'Zainab Malik',
     city: 'Karachi',
     rating: 5,
-    title: 'Best Comforter in Pakistan',
-    text: 'Fast 2-day delivery to Karachi! The Royal Indigo Winter Duvet is super warm, lightweight and feels like sleeping in a 5-star luxury hotel. Worth every rupee.',
-    product: 'Royal Indigo Heavy Winter Duvet',
+    title: 'Warm & Heavy Mink Blanket',
+    text: 'Plush Korean Double Ply Mink Blanket is extremely warm during Karachi winter nights. Double-sided embossed design looks regal and elegant.',
+    product: 'Plush Korean Double Ply Blanket',
     date: '1 week ago',
+    avatar: 'ZM',
+  },
+  {
+    name: 'Hamza Chaudhry',
+    city: 'Faisalabad',
+    rating: 5,
+    title: 'Elegant Woven Jacquard',
+    text: 'The Champagne Jacquard Bedspread gives our master bedroom a royal touch. The fabric sheen is subtle, premium, and durable.',
+    product: 'Luxury Jacquard Bedsheet Set',
+    date: '1 week ago',
+    avatar: 'HC',
   },
   {
     name: 'Fatima Raza',
-    city: 'Islamabad',
+    city: 'Rawalpindi',
     rating: 5,
     title: 'Beautiful Embroidery & Finishing',
     text: 'The geometric gold embroidered cushion covers transformed my living room completely. Very impressed with HK Fabric’s attention to detail and premium packaging.',
     product: 'Geometric Gold Embroidered Cushions',
     date: '2 weeks ago',
+    avatar: 'FR',
+  },
+  {
+    name: 'Bilal Mustafa',
+    city: 'Multan',
+    rating: 5,
+    title: 'Fast 48-Hour Delivery!',
+    text: 'Ordered from Multan and received delivery within 48 hours. Beautiful branded box packaging with zero damage. Will definitely order again.',
+    product: 'Maroon Velvet Heavy Bridal Set',
+    date: '2 weeks ago',
+    avatar: 'BM',
+  },
+  {
+    name: 'Mahnoor Tariq',
+    city: 'Sialkot',
+    rating: 5,
+    title: 'Emerald Royal Printed Set',
+    text: 'Deep emerald color looks stunning in real life. No shrinkage after cold machine wash, stitching is very neat and high quality.',
+    product: 'Emerald Royal Printed Bedsheet',
+    date: '3 weeks ago',
+    avatar: 'MT',
+  },
+  {
+    name: 'Usman Farooq',
+    city: 'Peshawar',
+    rating: 5,
+    title: 'Premium Winter Duvet Set',
+    text: 'Indigo Floral Winter Duvet Cover set keeps us cozy all night. Microfiber filling feels like sleeping on clouds!',
+    product: 'Indigo Floral Winter Duvet Set',
+    date: '1 month ago',
+    avatar: 'UF',
   },
 ]
 
@@ -144,6 +199,7 @@ const trustItems = [
 
 export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0)
+  const [selectedCategory, setSelectedCategory] = useState<string>('All')
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -152,10 +208,152 @@ export default function Home() {
     return () => clearInterval(timer)
   }, [])
 
+  // Professional GSAP ScrollTrigger Animations (Safe Target Execution)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    gsap.registerPlugin(ScrollTrigger)
+
+    const ctx = gsap.context(() => {
+      const safeFromTo = (selector: string, fromVars: gsap.TweenVars, toVars: gsap.TweenVars) => {
+        if (document.querySelectorAll(selector).length > 0) {
+          gsap.fromTo(selector, fromVars, toVars)
+        }
+      }
+
+      // 1. Trust Items
+      safeFromTo(
+        '.gsap-trust-item',
+        { opacity: 0, y: 25 },
+        {
+          scrollTrigger: { trigger: '.gsap-trust-section', start: 'top 88%' },
+          opacity: 1, y: 0, duration: 0.6, stagger: 0.08, ease: 'power2.out', clearProps: 'all'
+        }
+      )
+
+      // 2. Category Showcase Cards
+      safeFromTo(
+        '.gsap-category-card',
+        { opacity: 0, y: 25 },
+        {
+          scrollTrigger: { trigger: '.gsap-category-section', start: 'top 85%' },
+          opacity: 1, y: 0, duration: 0.6, stagger: 0.08, ease: 'power2.out', clearProps: 'all'
+        }
+      )
+
+      // 3. Catalog Section Title & Header
+      safeFromTo(
+        '.gsap-catalog-header',
+        { opacity: 0, y: 25 },
+        {
+          scrollTrigger: { trigger: '.gsap-catalog-section', start: 'top 85%' },
+          opacity: 1, y: 0, duration: 0.6, ease: 'power2.out', clearProps: 'all'
+        }
+      )
+
+      // 4. Category Tabs
+      safeFromTo(
+        '.gsap-category-tab',
+        { opacity: 0, y: 15 },
+        {
+          scrollTrigger: { trigger: '.gsap-catalog-section', start: 'top 85%' },
+          opacity: 1, y: 0, duration: 0.5, stagger: 0.05, ease: 'power2.out', clearProps: 'all'
+        }
+      )
+
+      // 5. Product Grid Initial Animation
+      safeFromTo(
+        '.gsap-product-card',
+        { opacity: 0, y: 25 },
+        {
+          scrollTrigger: { trigger: '.gsap-product-grid', start: 'top 88%' },
+          opacity: 1, y: 0, duration: 0.55, stagger: 0.06, ease: 'power2.out', clearProps: 'all'
+        }
+      )
+
+      // 6. Promo Banner
+      safeFromTo(
+        '.gsap-promo-content',
+        { opacity: 0, y: 25 },
+        {
+          scrollTrigger: { trigger: '.gsap-promo-section', start: 'top 85%' },
+          opacity: 1, y: 0, duration: 0.7, ease: 'power2.out', clearProps: 'all'
+        }
+      )
+
+      // 7. Featured Collections
+      safeFromTo(
+        '.gsap-collection-card',
+        { opacity: 0, y: 25 },
+        {
+          scrollTrigger: { trigger: '.gsap-collections-section', start: 'top 85%' },
+          opacity: 1, y: 0, duration: 0.6, stagger: 0.1, ease: 'power2.out', clearProps: 'all'
+        }
+      )
+
+      // 8. Testimonial Reviews Section
+      safeFromTo(
+        '.gsap-reviews-section',
+        { opacity: 0, y: 25 },
+        {
+          scrollTrigger: { trigger: '.gsap-reviews-section', start: 'top 85%' },
+          opacity: 1, y: 0, duration: 0.6, ease: 'power2.out', clearProps: 'all'
+        }
+      )
+
+      // 9. Story Section Text & Image
+      safeFromTo(
+        '.gsap-story-text',
+        { opacity: 0, y: 25 },
+        {
+          scrollTrigger: { trigger: '.gsap-story-section', start: 'top 85%' },
+          opacity: 1, y: 0, duration: 0.6, ease: 'power2.out', clearProps: 'all'
+        }
+      )
+
+      safeFromTo(
+        '.gsap-story-img',
+        { opacity: 0, y: 25 },
+        {
+          scrollTrigger: { trigger: '.gsap-story-section', start: 'top 85%' },
+          opacity: 1, y: 0, duration: 0.6, stagger: 0.12, ease: 'power2.out', clearProps: 'all'
+        }
+      )
+    })
+
+    setTimeout(() => {
+      ScrollTrigger.refresh()
+    }, 150)
+
+    return () => ctx.revert()
+  }, [])
+
+  // Animate product cards smoothly on tab switch (pure opacity fade, zero layout shift)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const cards = document.querySelectorAll('.gsap-product-card')
+    if (cards.length > 0) {
+      gsap.fromTo(
+        cards,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.3, stagger: 0.02, ease: 'power1.out', clearProps: 'all' }
+      )
+    }
+  }, [selectedCategory])
+
   const nextSlide = () => setCurrentSlide(prev => (prev + 1) % heroSlides.length)
   const prevSlide = () => setCurrentSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length)
 
-  const bestSellers = products.slice(0, 4)
+  const categoryTabs = [
+    { id: 'All', label: 'All Products', count: products.length },
+    { id: 'Bedsheets', label: 'Bedsheets', count: products.filter(p => p.category === 'Bedsheets').length },
+    { id: 'Comforters', label: 'Comforters', count: products.filter(p => p.category === 'Comforters').length },
+    { id: 'Blankets', label: 'Blankets', count: products.filter(p => p.category === 'Blankets').length },
+    { id: 'Cushions', label: 'Cushions', count: products.filter(p => p.category === 'Cushions').length },
+  ]
+
+  const displayedProducts = selectedCategory === 'All'
+    ? products
+    : products.filter(p => p.category === selectedCategory)
 
   return (
     <main>
@@ -232,11 +430,11 @@ export default function Home() {
       </section>
 
       {/* Trust / Service Bar */}
-      <section className="bg-white border-b border-[#E8E5DE]">
+      <section className="gsap-trust-section bg-white border-b border-[#E8E5DE]">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 border-l border-[#E8E5DE]">
             {trustItems.map((item, i) => (
-              <div key={i} className="flex items-center gap-2.5 sm:gap-3 py-4 sm:py-5 px-3 sm:px-6 border-r border-b lg:border-b-0 border-[#E8E5DE]">
+              <div key={i} className="gsap-trust-item flex items-center gap-2.5 sm:gap-3 py-4 sm:py-5 px-3 sm:px-6 border-r border-b lg:border-b-0 border-[#E8E5DE]">
                 <svg width="20" height="20" fill="none" stroke="#D4AF37" strokeWidth="1.5" viewBox="0 0 24 24" className="shrink-0">
                   {item.icon}
                 </svg>
@@ -250,64 +448,115 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Shop by Category */}
-      <section className="py-10 sm:py-16 lg:py-24 bg-[#F8F7F3]">
+      {/* Shop by Category Quick Grid */}
+      <section className="gsap-category-section py-10 sm:py-14 bg-[#F8F7F3] border-b border-[#E8E5DE]">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-6 sm:mb-10">
+          <div className="flex items-end justify-between mb-6 sm:mb-8">
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-[#D4AF37] mb-1 sm:mb-2 font-semibold">Explore</p>
-              <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-500 text-[#111111]">Shop by Category</h2>
+              <p className="text-[10px] uppercase tracking-widest text-[#D4AF37] mb-1 sm:mb-2 font-semibold">Explore Categories</p>
+              <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-500 text-[#111111]">Browse By Category</h2>
             </div>
             <Link href="/shop" className="text-[10px] sm:text-[11px] uppercase tracking-widest text-[#6B6B6B] hover:text-[#D4AF37] transition-colors border-b border-transparent hover:border-[#D4AF37] pb-0.5">
-              View All →
+              View All Shop →
             </Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 lg:gap-4">
             {categories.map(cat => (
-              <Link key={cat.name} href={cat.to} className="group relative overflow-hidden bg-[#F8F7F3] aspect-[3/4] rounded-xl shadow-xs hover:shadow-md transition-shadow">
-                <img
-                  src={cat.image}
-                  alt={cat.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
-                  <h3 className="font-serif text-white text-base sm:text-lg font-500 leading-tight">{cat.name}</h3>
-                  <p className="text-white/80 text-[9px] sm:text-[10px] mt-0.5">{cat.desc}</p>
-                </div>
-              </Link>
+              <div key={cat.name} className="gsap-category-card">
+                <Link href={cat.to} className="group relative overflow-hidden bg-[#F8F7F3] aspect-[3/4] rounded-xl shadow-xs hover:shadow-md transition-shadow block">
+                  <img
+                    src={cat.image}
+                    alt={cat.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
+                    <h3 className="font-serif text-white text-base sm:text-lg font-500 leading-tight">{cat.name}</h3>
+                    <p className="text-white/80 text-[9px] sm:text-[10px] mt-0.5">{cat.desc}</p>
+                  </div>
+                </Link>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Best Sellers */}
-      <section className="py-10 sm:py-16 lg:py-24 bg-white">
+      {/* ALL PRODUCTS FROM ALL CATEGORIES SECTION */}
+      <section className="gsap-catalog-section py-12 sm:py-18 lg:py-24 bg-white">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-6 sm:mb-10">
-            <div>
-              <p className="text-[10px] uppercase tracking-widest text-[#D4AF37] mb-1 sm:mb-2 font-semibold">Top Picks</p>
-              <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-500 text-[#111111]">Best Sellers</h2>
-            </div>
-            <Link href="/shop" className="text-[10px] sm:text-[11px] uppercase tracking-widest text-[#6B6B6B] hover:text-[#D4AF37] transition-colors border-b border-transparent hover:border-[#D4AF37] pb-0.5">
-              View All →
-            </Link>
+          
+          {/* Section Header */}
+          <div className="gsap-catalog-header text-center max-w-2xl mx-auto mb-8 sm:mb-12">
+            <p className="text-[10px] uppercase tracking-[0.25em] text-[#D4AF37] mb-2 font-semibold">Our Complete Catalog</p>
+            <h2 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-500 text-[#111111] mb-3">
+              Explore All Products
+            </h2>
+            <p className="text-xs sm:text-sm text-[#6B6B6B]">
+              Discover our complete collection of handcrafted bridal sets, Egyptian cotton bedsheets, microgel comforters, Korean mink blankets, and designer accent cushions.
+            </p>
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 gap-y-6 sm:gap-y-8">
-            {bestSellers.map(p => <ProductCard key={p.id} product={p} />)}
+
+          {/* Category Filter Tabs */}
+          <div className="flex items-center justify-center flex-wrap gap-2.5 sm:gap-3.5 mb-8 sm:mb-12">
+            {categoryTabs.map(tab => {
+              const isActive = selectedCategory === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setSelectedCategory(tab.id)}
+                  className={`gsap-category-tab px-5 sm:px-6 py-2.5 sm:py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-200 shadow-sm cursor-pointer ${
+                    isActive
+                      ? 'bg-[#111111] text-[#D4AF37] border-2 border-[#111111] shadow-md'
+                      : 'bg-[#F4F3EE] text-[#111111] border-2 border-[#D0CCC0] hover:bg-[#111111] hover:text-[#D4AF37] hover:border-[#111111]'
+                  }`}
+                >
+                  {tab.label}
+                  <span className={`ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    isActive ? 'bg-[#D4AF37] text-[#111111]' : 'bg-[#E0DDD3] text-[#111111]'
+                  }`}>
+                    {tab.count}
+                  </span>
+                </button>
+              )
+            })}
           </div>
+
+          {/* Product Grid (Displays all 18 products when 'All' is selected) */}
+          <div className="gsap-product-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 gap-y-6 sm:gap-y-8 items-stretch">
+            {displayedProducts.map(p => (
+              <div key={p.id} className="gsap-product-card h-full">
+                <ProductCard product={p} />
+              </div>
+            ))}
+          </div>
+
+          {/* Showing Count Footer */}
+          <div className="mt-10 sm:mt-14 text-center">
+            <p className="text-xs text-[#6B6B6B] mb-3">
+              Showing <span className="font-bold text-[#111111]">{displayedProducts.length}</span> of <span className="font-bold text-[#111111]">{products.length}</span> total luxury products
+            </p>
+            {selectedCategory !== 'All' && (
+              <button
+                onClick={() => setSelectedCategory('All')}
+                className="inline-block text-[10px] uppercase tracking-widest text-[#D4AF37] font-semibold border-b border-[#D4AF37] pb-0.5 hover:text-[#111111] hover:border-[#111111] transition-colors"
+              >
+                View All Categories ({products.length} Products) →
+              </button>
+            )}
+          </div>
+
         </div>
       </section>
 
       {/* Promotional Banner */}
-      <section className="relative overflow-hidden bg-[#111111] sm:rounded-2xl mx-0 sm:mx-4 lg:mx-8">
+      <section className="gsap-promo-section relative overflow-hidden bg-[#111111] sm:rounded-2xl mx-0 sm:mx-4 lg:mx-8 my-6">
         <img
           src="https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=1600&h=500&fit=crop&auto=format"
           alt="Sale on premium home textiles"
           className="absolute inset-0 w-full h-full object-cover opacity-35"
         />
-        <div className="relative z-10 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 lg:py-24">
+        <div className="gsap-promo-content relative z-10 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 lg:py-24">
           <div className="max-w-lg">
             <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.25em] text-[#D4AF37] mb-2 sm:mb-4 font-semibold">Limited Time Offer</p>
             <h2 className="font-serif text-3xl sm:text-5xl lg:text-7xl font-500 text-white leading-none mb-2">Up to 30% Off</h2>
@@ -320,7 +569,7 @@ export default function Home() {
       </section>
 
       {/* Featured Collections */}
-      <section className="py-10 sm:py-16 lg:py-24 bg-[#F8F7F3]">
+      <section className="gsap-collections-section py-10 sm:py-16 lg:py-24 bg-[#F8F7F3]">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-12">
             <p className="text-[10px] uppercase tracking-widest text-[#D4AF37] mb-1 font-semibold">Curated</p>
@@ -328,73 +577,119 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
             {collections.map(col => (
-              <Link key={col.name} href="/shop" className="group relative overflow-hidden bg-[#E8E5DE] aspect-video md:aspect-[4/3] rounded-xl shadow-xs">
-                <img
-                  src={col.image}
-                  alt={col.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
-                  <p className="text-[8px] sm:text-[9px] uppercase tracking-widest text-[#D4AF37] mb-1 font-semibold">{col.tag}</p>
-                  <h3 className="font-serif text-xl sm:text-2xl text-white font-500">{col.name}</h3>
-                  <span className="inline-block mt-1 sm:mt-2 text-[9px] sm:text-[10px] uppercase tracking-widest text-white/80 font-semibold border-b border-white/40 pb-0.5 group-hover:border-[#D4AF37] group-hover:text-[#D4AF37] transition-colors">
-                    Explore →
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Customer Reviews Section */}
-      <section className="py-12 sm:py-18 lg:py-24 bg-white border-t border-[#E8E5DE]">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10 sm:mb-14">
-            <p className="text-[10px] uppercase tracking-widest text-[#D4AF37] mb-2 font-semibold">Testimonials</p>
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-500 text-[#111111]">What Our Customers Say</h2>
-            <p className="text-xs sm:text-sm text-[#6B6B6B] mt-2 max-w-md mx-auto">Real reviews from verified buyers across Pakistan</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-            {reviewsData.map((rev, i) => (
-              <div key={i} className="bg-[#F8F7F3] border border-[#E8E5DE] rounded-xl p-5 sm:p-6 flex flex-col justify-between hover:shadow-md transition-shadow">
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-1">
-                      {[1, 2, 3, 4, 5].map(s => (
-                        <svg key={s} width="12" height="12" viewBox="0 0 24 24" fill="#D4AF37" stroke="#D4AF37">
-                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                        </svg>
-                      ))}
-                    </div>
-                    <span className="text-[9px] uppercase tracking-widest font-semibold bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-sm">
-                      Verified Buyer
+              <div key={col.name} className="gsap-collection-card">
+                <Link href="/shop" className="group relative overflow-hidden bg-[#E8E5DE] aspect-video md:aspect-[4/3] rounded-xl shadow-xs block">
+                  <img
+                    src={col.image}
+                    alt={col.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
+                    <p className="text-[8px] sm:text-[9px] uppercase tracking-widest text-[#D4AF37] mb-1 font-semibold">{col.tag}</p>
+                    <h3 className="font-serif text-xl sm:text-2xl text-white font-500">{col.name}</h3>
+                    <span className="inline-block mt-1 sm:mt-2 text-[9px] sm:text-[10px] uppercase tracking-widest text-white/80 font-semibold border-b border-white/40 pb-0.5 group-hover:border-[#D4AF37] group-hover:text-[#D4AF37] transition-colors">
+                      Explore →
                     </span>
                   </div>
-                  <h4 className="font-serif text-base font-semibold text-[#111111] mb-2">"{rev.title}"</h4>
-                  <p className="text-xs text-[#6B6B6B] leading-relaxed mb-4">{rev.text}</p>
-                </div>
-
-                <div className="pt-4 border-t border-[#E8E5DE] flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-semibold text-[#111111]">{rev.name}</p>
-                    <p className="text-[10px] text-[#6B6B6B]">{rev.city}, Pakistan</p>
-                  </div>
-                  <span className="text-[10px] text-[#888]">{rev.date}</span>
-                </div>
+                </Link>
               </div>
             ))}
           </div>
         </div>
       </section>
 
+      {/* Customer Reviews Section (Continuous Auto-Sliding Marquee Carousel) */}
+      <section className="gsap-reviews-section py-12 sm:py-18 lg:py-24 bg-white border-t border-[#E8E5DE] overflow-hidden">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 mb-8 sm:mb-12">
+          <div className="flex flex-col sm:flex-row items-center justify-between text-center sm:text-left gap-4">
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-[#D4AF37] mb-1.5 font-semibold flex items-center justify-center sm:justify-start gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                Testimonials & Reviews
+              </p>
+              <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-500 text-[#111111]">What Our Customers Say</h2>
+              <p className="text-xs sm:text-sm text-[#6B6B6B] mt-1">Real reviews from verified buyers across Pakistan</p>
+            </div>
+
+            <div className="flex items-center gap-3 bg-[#F8F7F3] border border-[#E8E5DE] px-4 py-2.5 rounded-full text-xs font-semibold shadow-2xs">
+              <div className="flex text-[#D4AF37] tracking-tight text-sm">
+                ★★★★★
+              </div>
+              <span className="text-[#111111] font-bold">4.9 / 5.0</span>
+              <span className="text-[#6B6B6B] text-[11px]">(500+ Reviews)</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Continuous Infinite Auto-Sliding Marquee Track */}
+        <div className="w-full overflow-hidden py-4">
+          {/* Marquee Track (Continuous infinite loop over 8 reviews x 2) */}
+          <div className="animate-marquee-continuous flex gap-5">
+            {[...reviewsData, ...reviewsData].map((rev, i) => (
+              <div
+                key={i}
+                className="w-[290px] sm:w-[360px] shrink-0 bg-[#F8F7F3] border border-[#E8E5DE] rounded-2xl p-5 sm:p-6 flex flex-col justify-between hover:shadow-xl hover:border-[#D4AF37] transition-all duration-300 transform hover:-translate-y-1 cursor-pointer"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-0.5 text-[#D4AF37]">
+                      {[...Array(rev.rating)].map((_, s) => (
+                        <svg key={s} width="13" height="13" viewBox="0 0 24 24" fill="#D4AF37" stroke="#D4AF37">
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                      ))}
+                    </div>
+                    <span className="text-[9px] uppercase tracking-widest font-semibold bg-green-100 text-green-800 border border-green-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <svg width="9" height="9" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                      </svg>
+                      Verified Buyer
+                    </span>
+                  </div>
+
+                  <h4 className="font-serif text-base font-semibold text-[#111111] mb-1.5 leading-snug">"{rev.title}"</h4>
+                  <p className="text-xs text-[#6B6B6B] leading-relaxed mb-4">{rev.text}</p>
+                </div>
+
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-[#D4AF37] font-semibold mb-3 truncate">
+                    Purchased: {rev.product}
+                  </p>
+
+                  <div className="pt-3 border-t border-[#E8E5DE] flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-full bg-[#111111] text-[#D4AF37] text-[11px] font-bold flex items-center justify-center border border-[#D4AF37]">
+                        {rev.avatar}
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-[#111111] leading-none">{rev.name}</p>
+                        <p className="text-[10px] text-[#6B6B6B] mt-0.5">{rev.city}, PK</p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-[#888] font-medium">{rev.date}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Hover Tip Indicator */}
+        <div className="text-center mt-4">
+          <p className="text-[10px] sm:text-[11px] text-[#888] tracking-widest uppercase font-medium flex items-center justify-center gap-2">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#D4AF37]"></span>
+            Hover over any review card to pause auto-sliding
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#D4AF37]"></span>
+          </p>
+        </div>
+      </section>
+
       {/* Brand Story Strip */}
-      <section className="bg-[#F8F7F3] border-t border-[#E8E5DE]">
+      <section className="gsap-story-section bg-[#F8F7F3] border-t border-[#E8E5DE]">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 flex flex-col md:flex-row items-center gap-6 sm:gap-8">
-          <div className="md:w-1/2">
+          <div className="gsap-story-text md:w-1/2">
             <p className="text-[10px] uppercase tracking-widest text-[#D4AF37] mb-2 font-semibold">Our Story</p>
             <h2 className="font-serif text-xl sm:text-2xl lg:text-3xl font-500 text-[#111111] mb-3 leading-snug">
               Crafted with care,<br />made for your home
@@ -407,11 +702,13 @@ export default function Home() {
             </Link>
           </div>
           <div className="md:w-1/2 grid grid-cols-2 gap-3 w-full">
-            <img src="https://images.unsplash.com/photo-1614226114676-8e02ac5f4763?w=400&h=300&fit=crop&auto=format" alt="Premium fabric texture" className="w-full h-32 sm:h-40 object-cover rounded-xl" />
-            <img src="https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=400&h=300&fit=crop&auto=format" alt="Fine textile weave" className="w-full h-32 sm:h-40 object-cover mt-4 sm:mt-6 rounded-xl" />
+            <img src="https://images.unsplash.com/photo-1614226114676-8e02ac5f4763?w=400&h=300&fit=crop&auto=format" alt="Premium fabric texture" className="gsap-story-img w-full h-32 sm:h-40 object-cover rounded-xl" />
+            <img src="https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=400&h=300&fit=crop&auto=format" alt="Fine textile weave" className="gsap-story-img w-full h-32 sm:h-40 object-cover mt-4 sm:mt-6 rounded-xl" />
           </div>
         </div>
       </section>
     </main>
   )
 }
+
+
