@@ -1,0 +1,95 @@
+# HK Fabric — Premium Home Textile E-Commerce Store
+
+A modern, production-grade e-commerce web application for **HK Fabric**, a leading Pakistani home-textile retail brand specializing in luxury bedsheets, bridal sets, comforters, blankets, and decorative cushions.
+
+Built with **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS v4**, and **Zustand State Management**.
+
+---
+
+## 🌟 Key Features
+
+- **Mobile-First Responsive Design**: Optimized 2-column mobile product grid, expandable mobile search, responsive navigation drawer, and collapsible mobile footer accordions.
+- **Dynamic Hero Banner Slider**: 4 vibrant, high-contrast, crystal-clear 4K slides (Ruby Red Bridal, Emerald Green Jacquard, Sapphire Blue Velvet, Terracotta Mink) with auto-play and touch controls.
+- **Rich Product Catalog**: Complete product listing across Bedsheets, Comforters, Blankets, and Cushions with color/size variations, badges, ratings, and stock status.
+- **E-Commerce Capabilities**:
+  - Full Cart Management (add/remove, quantity adjustment, persistent storage).
+  - Wishlist Toggle with live badge counters.
+  - Multi-step Checkout & Order Confirmation flow.
+  - Interactive Filter & Search drawer (by price range, category, rating, and stock).
+- **Customer Trust & Engagement**:
+  - Verified Buyer Testimonials ("What Our Customers Say").
+  - Service Trust Bar (Free Delivery, 100% Quality Guarantee, Easy Returns, Secure Payment).
+  - Integrated Header & Footer Social Links (Instagram, Facebook).
+- **Blazing Fast Performance**: Zero hydration mismatches, optimized image loading with `loading="eager"` and `fetchPriority="high"`.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Framework**: Next.js 16.3.0 (App Router)
+- **Language**: TypeScript 5.7
+- **Styling**: Tailwind CSS v4
+- **State Management**: Zustand
+- **Icons**: Lucide & Custom Inline SVGs
+- **Deployment Ready**: Optimized for Vercel / Netlify / Node.js servers
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18.0 or higher
+- npm or pnpm or yarn
+
+### Installation & Local Setup
+
+```bash
+# Navigate to project directory
+cd hk-next
+
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to view the application.
+
+### Production Build
+
+```bash
+# Build for production
+npm run build
+
+# Start production server
+npm run start
+```
+
+---
+
+## 📁 Repository Structure
+
+```
+hk-next/
+├── app/                      # Next.js App Router Pages & API Routes
+│   ├── page.tsx              # Homepage with Hero Slider, Categories & Best Sellers
+│   ├── shop/                 # Product Catalog with Mobile Filter Drawer
+│   ├── product/[slug]/       # Product Details Page with Image Gallery & Options
+│   ├── cart/                 # Shopping Cart Drawer & Page
+│   ├── checkout/             # Order Checkout & Payment Setup
+│   └── order-confirmation/   # Order Success Screen
+├── src/
+│   ├── components/           # Reusable UI Components (Header, Footer, ProductCard)
+│   ├── data/                 # Product catalog & mock datasets
+│   └── store.ts              # Zustand Global Store (Cart, Wishlist)
+├── public/                   # Static Media & Assets
+└── package.json              # Project Dependencies & Scripts
+```
+
+---
+
+## 📜 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
