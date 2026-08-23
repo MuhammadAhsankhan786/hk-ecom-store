@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import 'tailwindcss';
+
+:root {
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --hk-gold: #D4AF37;
+  --hk-gold-hover: #B8960C;
+  --hk-gold-light: #F8F7F3;
+  --hk-dark: #111111;
+  --hk-bg: #FFFFFF;
+  --hk-offwhite: #F8F7F3;
+  --hk-border: #E8E5DE;
+  --hk-muted: #6B6B6B;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--hk-offwhite);
+  color: var(--hk-dark);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F8F7F3;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D4AF37;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #B8960C;
+}
+
+/* Card hover animation */
+.hk-card-hover {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hk-card-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+/* Focus styles matching hk-next */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #D4AF37 !important;
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.15) !important;
+}
+
+/* Table styles */
+.hk-table th {
+  text-transform: uppercase;
+  font-size: 0.70rem;
+  letter-spacing: 0.05em;
+  color: #6B6B6B;
+  background-color: #F8F7F3;
+  font-weight: 600;
+  border-bottom: 1px solid #E8E5DE;
+}
+
+.hk-table tr:hover td {
+  background-color: #FAF9F5;
+}
