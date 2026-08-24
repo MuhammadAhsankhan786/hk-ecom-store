@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "cd hk-next && npm run build",
-    "dev": "cd hk-next && npm run dev",
-    "start": "cd hk-next && npm run start"
+    "build": "npm --prefix hk-next run build",
+    "dev": "npm --prefix hk-next run dev",
+    "start": "npm --prefix hk-next run start"
   },
   "dependencies": {
     "next": "16.3.0",
