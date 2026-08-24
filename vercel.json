@@ -1,5 +1,0 @@
-{
-  "buildCommand": "npm --prefix hk-next run build",
-  "outputDirectory": "hk-next/.next",
-  "framework": "nextjs"
-}
