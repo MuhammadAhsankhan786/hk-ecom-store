@@ -35,6 +35,11 @@ Thumbs.db
 .idea/
 *.tsbuildinfo
 
+# Private Local Documentation & Agent Files (Ignored by Git)
+SYSTEM_ARCHITECTURE_&_INTERVIEW_GUIDE.md
+.agents/
+skills-lock.json
+
 # Agent state
 /.plugins/
 /.opencode-skills/

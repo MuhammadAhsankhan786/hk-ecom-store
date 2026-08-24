@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { v2 as cloudinary } from 'cloudinary';
+import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
+import { Readable } from 'stream';
 
 @Injectable()
 export class MediaService {
@@ -9,6 +10,33 @@ export class MediaService {
       cloud_name: this.configService.get<string>('CLOUDINARY_CLOUD_NAME') || 'hk_fabric_cloud',
       api_key: this.configService.get<string>('CLOUDINARY_API_KEY') || 'key',
       api_secret: this.configService.get<string>('CLOUDINARY_API_SECRET') || 'secret',
+    });
+  }
+
+  /**
+   * Multer File Upload Handler - Stream buffer directly to Cloudinary CDN
+   */
+  async uploadImageWithMulter(file: Express.Multer.File, folder = 'products'): Promise<UploadApiResponse> {
+    if (!file || !file.buffer) {
+      throw new BadRequestException('Please provide a valid image file');
+    }
+
+    return new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: folder,
+          resource_type: 'auto',
+        },
+        (error, result) => {
+          if (error || !result) {
+            return reject(new BadRequestException(`Cloudinary Upload Failed: ${error?.message || 'Unknown error'}`));
+          }
+          resolve(result);
+        },
+      );
+
+      const stream = Readable.from(file.buffer);
+      stream.pipe(uploadStream);
     });
   }
 
