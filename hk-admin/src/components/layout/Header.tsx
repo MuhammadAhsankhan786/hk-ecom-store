@@ -11,7 +11,8 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar }) => {
   const {
     currentUser, setCurrentUser,
-    notifications, markNotificationAsRead
+    notifications, markNotificationAsRead,
+    logoutAdmin
   } = useAdmin();
 
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -122,6 +123,17 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar }) => {
                       {currentUser.role === role && <CheckCircle className="w-3.5 h-3.5" />}
                     </button>
                   ))}
+
+                  <div className="pt-2 border-t border-[#E8E5DE] mt-1">
+                    <button
+                      type="button"
+                      onClick={() => { setIsProfileOpen(false); logoutAdmin(); }}
+                      className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-bold text-rose-600 hover:bg-rose-50 cursor-pointer"
+                    >
+                      <span>Sign Out Admin</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

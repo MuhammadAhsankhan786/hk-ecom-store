@@ -5,16 +5,16 @@ import { Lock, Mail, CheckCircle } from 'lucide-react';
 import type { UserRole } from '../types/admin';
 
 export const LoginPage: React.FC = () => {
-  const { setCurrentTab, setCurrentUser, adminUsers } = useAdmin();
-  const [email, setEmail] = useState('ahsan@hkfabric.pk');
-  const [password, setPassword] = useState('••••••••••••');
+  const { loginAdmin, setCurrentUser, adminUsers, setCurrentTab } = useAdmin();
+  const [email, setEmail] = useState('admin@hkfabric.pk');
+  const [password, setPassword] = useState('Password123!');
   const [selectedRole, setSelectedRole] = useState<UserRole>('Super Admin');
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     const matched = adminUsers.find(u => u.email === email) || {
       id: 'u-1',
-      name: 'Ahsan Khan',
+      name: 'Muhammad Ahsan',
       email,
       role: selectedRole,
       status: 'Active' as const,
@@ -22,7 +22,7 @@ export const LoginPage: React.FC = () => {
     };
 
     setCurrentUser({ ...matched, role: selectedRole });
-    setCurrentTab('dashboard');
+    loginAdmin(email, password);
   };
 
   return (

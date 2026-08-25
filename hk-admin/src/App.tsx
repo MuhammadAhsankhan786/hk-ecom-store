@@ -131,12 +131,27 @@ const MainContentRouter: React.FC = () => {
   }
 };
 
+const AdminAppContainer: React.FC = () => {
+  const { isAuthenticated, currentTab } = useAdmin();
+
+  if (!isAuthenticated) {
+    if (currentTab === 'forgot-password') {
+      return <ForgotPasswordPage />;
+    }
+    return <LoginPage />;
+  }
+
+  return (
+    <AdminLayout>
+      <MainContentRouter />
+    </AdminLayout>
+  );
+};
+
 export default function App() {
   return (
     <AdminProvider>
-      <AdminLayout>
-        <MainContentRouter />
-      </AdminLayout>
+      <AdminAppContainer />
     </AdminProvider>
   );
 }

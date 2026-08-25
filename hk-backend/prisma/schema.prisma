@@ -359,6 +359,9 @@ model AuditLog {
 
 model HomepageCMS {
   id                    String   @id @default("default")
+  brandName             String?  @default("HK Fabric")
+  siteLogo              String?  // Cloudinary image URL for site logo
+  siteFavicon           String?  // Cloudinary image URL for site favicon
   heroBanners           String   // JSON string of banners
   announcementBar       String   // JSON string
   promoSection          String   // JSON string

@@ -39,6 +39,9 @@ interface AdminContextType {
   // Current logged in user & role
   currentUser: AdminUser;
   setCurrentUser: (user: AdminUser) => void;
+  isAuthenticated: boolean;
+  loginAdmin: (email: string, pass: string) => boolean;
+  logoutAdmin: () => void;
   
   // Entity states & handlers
   products: Product[];
@@ -117,7 +120,28 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
   
   const [currentUser, setCurrentUser] = useState<AdminUser>(INITIAL_ADMIN_USERS[0]);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('hk_admin_auth') === 'true';
+  });
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const loginAdmin = (email: string, pass: string): boolean => {
+    if (email.trim() && pass.length >= 4) {
+      setIsAuthenticated(true);
+      localStorage.setItem('hk_admin_auth', 'true');
+      setCurrentTab('dashboard');
+      showToast(`Welcome back, ${currentUser.name}!`);
+      return true;
+    }
+    return false;
+  };
+
+  const logoutAdmin = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('hk_admin_auth');
+    setCurrentTab('login');
+    showToast('Admin session logged out safely.');
+  };
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -333,6 +357,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       currentTab, setCurrentTab,
       selectedEntityId, setSelectedEntityId,
       currentUser, setCurrentUser,
+      isAuthenticated, loginAdmin, logoutAdmin,
       products, addProduct, updateProduct, deleteProduct,
       categories, addCategory, updateCategory, deleteCategory,
       collections, addCollection, updateCollection, deleteCollection,
