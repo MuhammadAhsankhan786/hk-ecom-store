@@ -115,7 +115,7 @@ export const Navbar: React.FC = () => {
 
   return (
     <>
-      <header className="bg-[#111111] text-white border-b border-gray-800 sticky top-0 z-40 shadow-xl select-none">
+      <header ref={dropdownRef} className="bg-[#111111] text-white border-b border-gray-800 sticky top-0 z-40 shadow-xl select-none">
         {/* Top Utility Header Bar */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           {/* Left Logo & Brand */}
@@ -299,7 +299,12 @@ export const Navbar: React.FC = () => {
                           return (
                             <button
                               key={item.id}
-                              onClick={() => handleNavClick(item.id)}
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleNavClick(item.id);
+                              }}
                               className={`w-full text-left p-2.5 rounded-lg transition-colors cursor-pointer ${
                                 isActive ? 'bg-[#222222] text-[#D4AF37]' : 'hover:bg-gray-800 text-gray-200'
                               }`}
