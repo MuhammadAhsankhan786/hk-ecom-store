@@ -387,220 +387,17 @@ export const INITIAL_COLLECTIONS: Collection[] = [
   }
 ];
 
-export const INITIAL_INVENTORY_LOGS: InventoryAdjustment[] = [
-  {
-    id: 'inv-log-101',
-    productId: 'prod-18',
-    productName: 'Ruby Red & Gold Heavy Bridal Bedding Set (10 Pcs)',
-    sku: 'HKF-BR-018',
-    previousQuantity: 10,
-    adjustment: -4,
-    newQuantity: 6,
-    type: 'Customer Return',
-    reason: 'Dispatched 4 sets for Lahore showroom order fulfillment',
-    user: 'Tariq Mehmood (Inventory Manager)',
-    createdAt: '2026-08-19 14:30'
-  },
-  {
-    id: 'inv-log-102',
-    productId: 'prod-17',
-    productName: 'Maroon Velvet Heavy Bridal Bedding Set (10 Pcs)',
-    sku: 'HKF-BR-017',
-    previousQuantity: 8,
-    adjustment: -4,
-    newQuantity: 4,
-    type: 'Audit Correction',
-    reason: 'Physical count verified after Gulberg warehouse audit',
-    user: 'Ahsan Khan (Super Admin)',
-    createdAt: '2026-08-18 11:15'
-  }
-];
+export const INITIAL_INVENTORY_LOGS: InventoryAdjustment[] = [];
 
-export const INITIAL_ORDERS: Order[] = [
-  {
-    id: 'ord-1001',
-    orderNumber: 'HK-9842',
-    customerName: 'Fatima Zalmai',
-    customerEmail: 'fatima.zalmai@gmail.com',
-    customerPhone: '+92 300 8472911',
-    shippingAddress: {
-      address: 'House #45-B, Block C, Gulberg III',
-      city: 'Lahore',
-      province: 'Punjab',
-      postalCode: '54000'
-    },
-    items: [
-      {
-        productId: 'prod-18',
-        productName: 'Ruby Red & Gold Heavy Bridal Bedding Set (10 Pcs)',
-        sku: 'HKF-BR-018',
-        variant: 'Ruby Red & Gold / King (10 Pcs Set)',
-        quantity: 1,
-        price: 15999,
-        image: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=400&h=400&fit=crop&auto=format'
-      }
-    ],
-    subtotal: 15999,
-    shippingFee: 0,
-    discount: 1000,
-    tax: 0,
-    total: 14999,
-    paymentMethod: 'Easypaisa',
-    paymentStatus: 'Successful',
-    paymentReference: 'EP-983719482012',
-    easypaisaTxnId: 'EP-983719482012',
-    orderStatus: 'Processing',
-    timeline: [
-      { status: 'Pending Payment', timestamp: '2026-08-19 10:12', note: 'Order placed by customer', by: 'System' },
-      { status: 'Paid', timestamp: '2026-08-19 10:15', note: 'Easypaisa instant payment confirmation', by: 'Easypaisa Gateway' },
-      { status: 'Processing', timestamp: '2026-08-19 11:30', note: 'Assigned to warehouse packing team', by: 'Zubair Ahmed' }
-    ],
-    createdAt: '2026-08-19 10:12'
-  },
-  {
-    id: 'ord-1002',
-    orderNumber: 'HK-9841',
-    customerName: 'Muhammad Usman',
-    customerEmail: 'usman.khi@hotmail.com',
-    customerPhone: '+92 321 9845112',
-    shippingAddress: {
-      address: 'Apartment 402, Royal Residency, Clifton Block 4',
-      city: 'Karachi',
-      province: 'Sindh',
-      postalCode: '75600'
-    },
-    items: [
-      {
-        productId: 'prod-1',
-        productName: 'Premium Digital Printed Bedsheet Set',
-        sku: 'HKF-BS-001',
-        variant: 'White / King',
-        quantity: 2,
-        price: 4499,
-        image: 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=400&h=400&fit=crop&auto=format'
-      }
-    ],
-    subtotal: 8998,
-    shippingFee: 250,
-    discount: 0,
-    tax: 0,
-    total: 9248,
-    paymentMethod: 'Cash on Delivery',
-    paymentStatus: 'Pending',
-    orderStatus: 'Packed',
-    timeline: [
-      { status: 'Pending Payment', timestamp: '2026-08-18 16:40', note: 'COD order confirmed via phone call', by: 'Zubair Ahmed' },
-      { status: 'Processing', timestamp: '2026-08-18 17:00', note: 'Dispatched to fulfillment', by: 'Zubair Ahmed' },
-      { status: 'Packed', timestamp: '2026-08-19 09:00', note: 'Dispatched label printed for Leopard Courier', by: 'Warehouse' }
-    ],
-    createdAt: '2026-08-18 16:40'
-  }
-];
+export const INITIAL_ORDERS: Order[] = [];
 
-export const INITIAL_TRANSACTIONS: Transaction[] = [
-  {
-    id: 'txn-1',
-    transactionId: 'EP-983719482012',
-    orderId: 'HK-9842',
-    customerName: 'Fatima Zalmai',
-    amount: 14999,
-    provider: 'Easypaisa',
-    status: 'Successful',
-    reference: 'REF-EP-20260819-9842',
-    createdAt: '2026-08-19 10:15',
-    rawPayload: '{"response_code":"0000","response_message":"TRANSACTION SUCCESSFUL","merchant_id":"HK_FABRIC_882","account_number":"0300****911"}'
-  }
-];
+export const INITIAL_TRANSACTIONS: Transaction[] = [];
 
-export const INITIAL_CUSTOMERS: Customer[] = [
-  {
-    id: 'cust-1',
-    name: 'Fatima Zalmai',
-    email: 'fatima.zalmai@gmail.com',
-    phone: '+92 300 8472911',
-    city: 'Lahore',
-    ordersCount: 4,
-    totalSpent: 68500,
-    lastOrderDate: '2026-08-19',
-    status: 'Active',
-    addresses: [
-      {
-        title: 'Home Address',
-        address: 'House #45-B, Block C, Gulberg III',
-        city: 'Lahore',
-        province: 'Punjab',
-        isDefault: true
-      }
-    ],
-    createdAt: '2025-11-10'
-  },
-  {
-    id: 'cust-2',
-    name: 'Muhammad Usman',
-    email: 'usman.khi@hotmail.com',
-    phone: '+92 321 9845112',
-    city: 'Karachi',
-    ordersCount: 2,
-    totalSpent: 28500,
-    lastOrderDate: '2026-08-18',
-    status: 'Active',
-    addresses: [
-      {
-        title: 'Apartment',
-        address: 'Apartment 402, Royal Residency, Clifton Block 4',
-        city: 'Karachi',
-        province: 'Sindh',
-        isDefault: true
-      }
-    ],
-    createdAt: '2026-02-14'
-  }
-];
+export const INITIAL_CUSTOMERS: Customer[] = [];
 
-export const INITIAL_COUPONS: Coupon[] = [
-  {
-    id: 'coup-1',
-    code: 'WELCOME10',
-    type: 'percentage',
-    value: 10,
-    minOrderValue: 5000,
-    maxDiscount: 2000,
-    startDate: '2026-01-01',
-    expiryDate: '2026-12-31',
-    usageLimit: 500,
-    usedCount: 142,
-    perCustomerLimit: 1,
-    status: 'Active'
-  },
-  {
-    id: 'coup-2',
-    code: 'AZADI2026',
-    type: 'fixed',
-    value: 1400,
-    minOrderValue: 10000,
-    startDate: '2026-08-10',
-    expiryDate: '2026-08-25',
-    usageLimit: 200,
-    usedCount: 88,
-    perCustomerLimit: 1,
-    status: 'Active'
-  }
-];
+export const INITIAL_COUPONS: Coupon[] = [];
 
-export const INITIAL_REVIEWS: Review[] = [
-  {
-    id: 'rev-1',
-    productId: 'prod-18',
-    productName: 'Ruby Red & Gold Heavy Bridal Bedding Set (10 Pcs)',
-    customerName: 'Fatima Zalmai',
-    customerEmail: 'fatima.zalmai@gmail.com',
-    rating: 5,
-    comment: 'SubhanAllah! The metallic zari gold work is unbelievably refined and beautiful. Exactly as shown in photos. Fits our King bed perfectly.',
-    verifiedPurchase: true,
-    status: 'Approved',
-    createdAt: '2026-08-19 18:20'
-  }
-];
+export const INITIAL_REVIEWS: Review[] = [];
 
 export const INITIAL_CMS: HomepageCMS = {
   heroBanners: [
@@ -614,8 +411,8 @@ export const INITIAL_CMS: HomepageCMS = {
       isActive: true
     }
   ],
-  featuredProductIds: ['prod-18', 'prod-17', 'prod-1'],
-  featuredCollectionIds: ['col-1', 'col-2', 'col-4'],
+  featuredProductIds: [],
+  featuredCollectionIds: [],
   promotionalBanner: {
     id: 'pb-1',
     image: 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=1200&h=800&fit=crop&auto=format',
@@ -632,28 +429,20 @@ export const INITIAL_CMS: HomepageCMS = {
 export const INITIAL_ADMIN_USERS: AdminUser[] = [
   {
     id: 'user-1',
-    name: 'Ahsan Khan',
-    email: 'ahsan@hkfabric.pk',
+    name: 'Muhammad Ahsan',
+    email: 'admin@hkfabric.pk',
     role: 'Super Admin',
     status: 'Active',
-    lastLogin: '2026-08-20 02:20',
+    lastLogin: 'Just now',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&auto=format'
   },
   {
     id: 'user-2',
-    name: 'Tariq Mehmood',
-    email: 'tariq.inventory@hkfabric.pk',
-    role: 'Inventory Manager',
+    name: 'Store Manager',
+    email: 'manager@hkfabric.pk',
+    role: 'Store Manager',
     status: 'Active',
-    lastLogin: '2026-08-19 16:30'
-  },
-  {
-    id: 'user-3',
-    name: 'Zubair Ahmed',
-    email: 'zubair.orders@hkfabric.pk',
-    role: 'Order Manager',
-    status: 'Active',
-    lastLogin: '2026-08-19 18:10'
+    lastLogin: '2026-08-25'
   }
 ];
 
@@ -685,19 +474,7 @@ export const INITIAL_ROLES_MATRIX: RolePermission[] = [
   }
 ];
 
-export const INITIAL_AUDIT_LOGS: AuditLog[] = [
-  {
-    id: 'log-1',
-    user: 'Ahsan Khan (Super Admin)',
-    action: 'Changed product sale price',
-    entity: 'Product',
-    entityId: 'HKF-BR-018',
-    previousValue: 'PKR 19,999',
-    newValue: 'PKR 15,999',
-    timestamp: '2026-08-19 22:15',
-    ipAddress: '111.68.102.14 (Lahore, PK)'
-  }
-];
+export const INITIAL_AUDIT_LOGS: AuditLog[] = [];
 
 export const INITIAL_STORE_SETTINGS: StoreSettings = {
   storeName: 'HK Fabric',
@@ -712,26 +489,9 @@ export const INITIAL_STORE_SETTINGS: StoreSettings = {
   defaultShippingFee: 250,
   freeShippingThreshold: 5000,
   taxRatePercent: 0,
-  orderNotificationEmails: 'orders@hkfabric.pk, ahsan@hkfabric.pk',
+  orderNotificationEmails: 'orders@hkfabric.pk, admin@hkfabric.pk',
   seoTitle: 'HK Fabric — Luxury Home Textiles & Bedding Pakistan',
   seoDescription: 'Buy 100% Egyptian cotton sheets, bridal bed sets, goose down duvets, and cushions online in Pakistan.'
 };
 
-export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: 'notif-1',
-    title: 'Low Stock Warning',
-    message: 'Maroon Velvet Heavy Bridal Bedding Set (HKF-BR-017) has reached 4 remaining units.',
-    type: 'stock',
-    isRead: false,
-    createdAt: '2026-08-19 23:00'
-  },
-  {
-    id: 'notif-2',
-    title: 'Easypaisa Payment Verified',
-    message: 'Order #HK-9842 (PKR 14,999) payment confirmed automatically by Easypaisa.',
-    type: 'payment',
-    isRead: false,
-    createdAt: '2026-08-19 10:15'
-  }
-];
+export const INITIAL_NOTIFICATIONS: NotificationItem[] = [];
