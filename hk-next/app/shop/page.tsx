@@ -4,7 +4,8 @@ import { useState, useMemo, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import ProductCard from '../../src/components/ProductCard'
-import { products } from '../../src/data/products'
+import { products as fallbackProducts, type Product } from '../../src/data/products'
+import { fetchProductsFromAPI } from '../../src/services/api'
 
 const CATEGORIES = ['All', 'Bedsheets', 'Comforters', 'Blankets', 'Cushions']
 const SORT_OPTIONS = [
@@ -25,9 +26,40 @@ function ShopContent() {
 
   const [category, setCategory] = useState(initialCategory)
   const [sort, setSort] = useState('popular')
-  const [priceRange, setPriceRange] = useState([0, 15000])
+  const [priceRange, setPriceRange] = useState([0, 25000])
   const [filterOpen, setFilterOpen] = useState(false)
   const [gridView, setGridView] = useState<'2' | '3' | '4'>('4')
+  const [liveProducts, setLiveProducts] = useState<Product[]>(fallbackProducts)
+
+  // Fetch live products from NestJS REST API on mount
+  useEffect(() => {
+    async function loadAPIProducts() {
+      const res = await fetchProductsFromAPI()
+      if (res && res.data && res.data.length > 0) {
+        const mapped: Product[] = res.data.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          slug: p.slug,
+          category: p.category?.name || 'Bedsheets',
+          price: p.price,
+          oldPrice: p.salePrice || undefined,
+          rating: 5.0,
+          reviews: p.reviews?.length || 12,
+          image: p.images[0]?.url || 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=600&h=600&fit=crop&auto=format',
+          images: p.images.map((img: any) => img.url),
+          badge: p.isFeatured ? 'new' : undefined,
+          inStock: p.stock > 0,
+          material: p.description || '100% Cotton Satin',
+          sizes: p.variants?.map((v: any) => v.size) || ['King', 'Queen'],
+          colors: p.variants?.map((v: any) => v.color) || ['Gold', 'Maroon'],
+          description: p.description,
+          sku: p.sku,
+        }))
+        setLiveProducts(mapped)
+      }
+    }
+    loadAPIProducts()
+  }, [])
 
   // Infinite Scroll state
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_BATCH)
@@ -40,7 +72,7 @@ function ShopContent() {
   }, [category, sort, priceRange, initialBadge, initialSale])
 
   const filtered = useMemo(() => {
-    let list = [...products]
+    let list = [...liveProducts]
     if (category !== 'All') list = list.filter(p => p.category === category)
     if (initialBadge) list = list.filter(p => p.badge === initialBadge)
     if (initialSale) list = list.filter(p => p.oldPrice)
@@ -49,10 +81,10 @@ function ShopContent() {
       case 'price-asc': list.sort((a, b) => a.price - b.price); break
       case 'price-desc': list.sort((a, b) => b.price - a.price); break
       case 'rating': list.sort((a, b) => b.rating - a.rating); break
-      case 'newest': list.sort((a, b) => b.id - a.id); break
+      case 'newest': list.sort((a, b) => String(b.id).localeCompare(String(a.id))); break
     }
     return list
-  }, [category, sort, priceRange, initialBadge, initialSale])
+  }, [liveProducts, category, sort, priceRange, initialBadge, initialSale])
 
   // Products slice to display in Infinite Scroll
   const visibleProducts = useMemo(() => {

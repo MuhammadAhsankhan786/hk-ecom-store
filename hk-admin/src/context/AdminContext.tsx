@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { fetchAdminProductsAPI, fetchAdminOrdersAPI } from '../services/api';
 import type {
   Product, Category, Collection, InventoryAdjustment, Order,
   Transaction, Customer, Coupon, Review, HomepageCMS, AdminUser,
-  RolePermission, AuditLog, StoreSettings, NotificationItem, UserRole, OrderStatus
+  RolePermission, AuditLog, StoreSettings, NotificationItem, UserRole, OrderStatus, PaymentProvider
 } from '../types/admin';
 import {
   INITIAL_PRODUCTS, INITIAL_CATEGORIES, INITIAL_COLLECTIONS,
@@ -124,6 +125,107 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return localStorage.getItem('hk_admin_auth') === 'true';
   });
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Fetch live products & orders from NestJS REST API on mount
+  useEffect(() => {
+    async function loadLiveBackendData() {
+      try {
+        const prodRes = await fetchAdminProductsAPI();
+        if (prodRes && prodRes.data && prodRes.data.length > 0) {
+          const mapped: Product[] = prodRes.data.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            slug: p.slug,
+            sku: p.sku,
+            category: p.category?.name || 'Bedding Sets',
+            collection: p.collection?.name || 'Wedding Collection',
+            price: p.price,
+            salePrice: p.salePrice || undefined,
+            costPrice: Math.round(p.price * 0.6),
+            stock: p.stock,
+            reservedStock: 0,
+            lowStockThreshold: 5,
+            status: p.isArchived ? 'Draft' : 'Active',
+            isFeatured: p.isFeatured,
+            size: p.variants?.map((v: any) => v.size) || ['King', 'Queen'],
+            color: p.variants?.map((v: any) => v.color) || ['Maroon', 'Gold'],
+            material: '100% Egyptian Cotton',
+            pattern: 'Embroidered',
+            fabric: '600 Thread Count',
+            shortDescription: p.description?.substring(0, 80) || '',
+            description: p.description || '',
+            images: p.images && p.images.length > 0 ? p.images.map((img: any, idx: number) => ({
+              id: img.id || `img-${idx}`,
+              url: img.url,
+              filename: `image_${idx}.jpg`,
+              altText: p.name,
+              sortOrder: idx + 1,
+              isPrimary: idx === 0
+            })) : [
+              {
+                id: 'img-def-1',
+                url: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=800&q=80',
+                filename: 'bedding_sample.jpg',
+                altText: p.name,
+                sortOrder: 1,
+                isPrimary: true
+              }
+            ],
+            createdAt: p.createdAt ? new Date(p.createdAt).toISOString().split('T')[0] : '2026-08-25',
+            updatedAt: p.updatedAt ? new Date(p.updatedAt).toISOString().split('T')[0] : '2026-08-25'
+          }));
+          setProducts(mapped);
+        }
+
+        const orderRes = await fetchAdminOrdersAPI();
+        if (orderRes && Array.isArray(orderRes) && orderRes.length > 0) {
+          const mappedOrders: Order[] = orderRes.map((o: any) => ({
+            id: o.id,
+            orderNumber: o.orderNumber || `HK-ORD-${o.id.substring(0, 5)}`,
+            customerName: o.customerName || 'Customer',
+            customerEmail: o.customerEmail || 'customer@example.com',
+            customerPhone: o.customerPhone || '03001234567',
+            shippingAddress: {
+              address: o.shippingAddress || 'Main Boulevard',
+              city: o.city || 'Lahore',
+              province: 'Punjab',
+              postalCode: '54000'
+            },
+            items: o.items?.map((item: any) => ({
+              productId: item.productId || 'p-1',
+              productName: item.productName || 'Bedding Set',
+              sku: item.productSku || 'SKU-001',
+              variant: `${item.variantSize || 'King'} / ${item.variantColor || 'Gold'}`,
+              quantity: item.quantity || 1,
+              price: item.unitPrice || 15000,
+              image: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=600&h=600&fit=crop&auto=format'
+            })) || [],
+            subtotal: o.subtotal || o.totalAmount || 15000,
+            shippingFee: o.shippingFee || 0,
+            discount: o.discount || 0,
+            tax: 0,
+            total: o.totalAmount || 15000,
+            paymentMethod: (o.paymentMethod || 'Easypaisa') as PaymentProvider,
+            paymentStatus: o.paymentStatus === 'COMPLETED' ? 'Successful' : 'Pending',
+            orderStatus: o.orderStatus === 'PENDING' ? 'Processing' : (o.orderStatus || 'Processing'),
+            timeline: [
+              {
+                status: 'Processing',
+                timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+                note: 'Order placed by customer',
+                by: 'Customer'
+              }
+            ],
+            createdAt: o.createdAt ? new Date(o.createdAt).toISOString().split('T')[0] : '2026-08-25'
+          }));
+          setOrders(mappedOrders);
+        }
+      } catch (err) {
+        console.warn('Backend API connection pending or offline, using default store state:', err);
+      }
+    }
+    loadLiveBackendData();
+  }, []);
 
   const loginAdmin = (email: string, pass: string): boolean => {
     if (email.trim() && pass.length >= 4) {
