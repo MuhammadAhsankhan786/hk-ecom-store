@@ -3,6 +3,7 @@
  * Connects hk-admin to NestJS REST Backend (http://localhost:5000)
  * All product/category mutations go through the real backend API.
  */
+import { toast } from 'react-hot-toast';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -31,6 +32,17 @@ async function apiRequest<T = any>(
     } catch {
       // ignore JSON parse errors on error body
     }
+    
+    if (res.status === 401) {
+      errorMessage = "Unauthorized access. Please login again.";
+      // Optionally trigger logout logic here if needed
+      localStorage.removeItem('hk_admin_token');
+      localStorage.setItem('hk_admin_auth', 'false');
+      // A full reload can force context reset, but better to just show toast
+      setTimeout(() => window.location.reload(), 1500);
+    }
+    
+    toast.error(errorMessage);
     throw new Error(errorMessage);
   }
 

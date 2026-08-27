@@ -1,6 +1,7 @@
 import React from 'react';
 import { AdminProvider, useAdmin } from './context/AdminContext';
 import AdminLayout from './components/layout/AdminLayout';
+import { Toaster } from 'react-hot-toast';
 
 // Screen Imports
 import DashboardPage from './pages/DashboardPage';
@@ -151,6 +152,7 @@ const AdminAppContainer: React.FC = () => {
 export default function App() {
   return (
     <AdminProvider>
+      <Toaster position="top-right" />
       <AdminAppContainer />
     </AdminProvider>
   );
