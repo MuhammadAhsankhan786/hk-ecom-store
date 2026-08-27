@@ -128,10 +128,14 @@ export class ProductsService {
 
     const finalStatus = status || ProductStatus.PUBLISHED;
     const publishedAt = finalStatus === ProductStatus.PUBLISHED ? new Date() : null;
+    
+    // Auto-generate SKU if not provided
+    const sku = productData.sku || `HK-${productData.slug.substring(0, 5).toUpperCase()}-${Date.now().toString().slice(-4)}`;
 
     return await this.prisma.product.create({
       data: {
         ...productData,
+        sku,
         status: finalStatus,
         publishedAt,
         categoryId: finalCategoryId,

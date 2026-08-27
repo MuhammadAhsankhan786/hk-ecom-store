@@ -213,7 +213,7 @@ export const ProductFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = false
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !sku) return;
+    if (!name) return;
 
     // Resolve human-readable category name for display
     const selectedCategory = categories.find(c => c.id === categoryId);
@@ -221,7 +221,7 @@ export const ProductFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = false
     const payload = {
       name,
       slug: slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-      sku,
+      sku: existing?.sku || `HK-${name.substring(0, 5).toUpperCase()}-${Date.now().toString().slice(-4)}`,
       category: selectedCategory?.name || 'Bedding Sets',
       categoryId,  // UUID sent to backend
       collection,
@@ -240,7 +240,7 @@ export const ProductFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = false
       fabric,
       shortDescription,
       description,
-      images
+      images: images.map(img => img.url)
     };
 
     try {
@@ -300,17 +300,8 @@ export const ProductFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = false
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-[#111111] mb-1">SKU *</label>
-                  <input
-                    type="text"
-                    required
-                    value={sku}
-                    onChange={e => setSku(e.target.value)}
-                    className="w-full px-3 py-2 text-xs border border-[#E8E5DE] rounded-lg bg-[#F8F7F3] font-mono"
-                  />
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-1 gap-3">
+                {/* SKU field is now hidden and auto-generated based on title */}
                 <div>
                   <label className="block text-xs font-bold text-[#111111] mb-1">URL Slug</label>
                   <input

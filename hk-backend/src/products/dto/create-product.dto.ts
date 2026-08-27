@@ -44,9 +44,10 @@ export class CreateProductDto {
   @IsString()
   description: string;
 
-  @ApiProperty({ example: 'SKU-VELVET-BRIDAL' })
+  @ApiProperty({ example: 'SKU-VELVET-BRIDAL', required: false })
+  @IsOptional()
   @IsString()
-  sku: string;
+  sku?: string;
 
   @ApiProperty({ example: 8500 })
   @IsNumber()
