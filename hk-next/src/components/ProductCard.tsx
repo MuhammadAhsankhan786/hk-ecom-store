@@ -18,6 +18,14 @@ function Stars({ rating }: { rating: number }) {
   )
 }
 
+export function isNewArrival(publishedAt?: string | Date): boolean {
+  if (!publishedAt) return false
+  const pubTime = new Date(publishedAt).getTime()
+  if (isNaN(pubTime)) return false
+  const diffMs = Date.now() - pubTime
+  return diffMs >= 0 && diffMs <= 24 * 60 * 60 * 1000
+}
+
 function BadgeTag({ badge }: { badge: string }) {
   const styles: Record<string, string> = {
     sale: 'bg-[#111111] text-white',
@@ -36,6 +44,7 @@ export default function ProductCard({ product }: { product: Product }) {
   const [imgSrc, setImgSrc] = useState(product.image)
   const inWishlist = isInWishlist(product.id)
   const discount = product.oldPrice ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100) : 0
+  const showNewBadge = product.badge === 'new' || isNewArrival(product.publishedAt)
 
   return (
     <div className="group relative flex flex-col h-full bg-white border border-[#E8E5DE] rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300">
@@ -53,7 +62,8 @@ export default function ProductCard({ product }: { product: Product }) {
 
         {/* Badges */}
         <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-col gap-1 z-10">
-          {product.badge && <BadgeTag badge={product.badge} />}
+          {showNewBadge && <BadgeTag badge="new" />}
+          {product.badge && product.badge !== 'new' && <BadgeTag badge={product.badge} />}
           {discount > 0 && (
             <span className="text-[8px] sm:text-[9px] uppercase tracking-widest font-semibold px-1.5 sm:px-2 py-0.5 rounded-sm bg-[#D4AF37] text-[#111111]">-{discount}%</span>
           )}

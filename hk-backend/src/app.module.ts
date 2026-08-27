@@ -12,6 +12,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { MediaModule } from './media/media.module';
 import { CouponsModule } from './coupons/coupons.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { CategoriesModule } from './categories/categories.module';
 import { AdminModule } from './admin/admin.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -31,6 +32,7 @@ import { AppService } from './app.service';
     CommonModule,
     PrismaModule,
     AuthModule,
+    CategoriesModule,
     ProductsModule,
     InventoryModule,
     OrdersModule,

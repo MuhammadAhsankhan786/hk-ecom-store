@@ -33,13 +33,15 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ images, onChange }
             setUploadProgress(0);
 
             // Add new image
-            const randomUrl = SAMPLE_UPLOADS[Math.floor(Math.random() * SAMPLE_UPLOADS.length)];
             const file = e?.target?.files?.[0];
             const fileName = file ? file.name : `cloudinary_img_${Date.now().toString().slice(-4)}.jpg`;
+            
+            // Read actual file using object URL, fallback to random if no file
+            const actualUrl = file ? URL.createObjectURL(file) : SAMPLE_UPLOADS[Math.floor(Math.random() * SAMPLE_UPLOADS.length)];
 
             const newImg: ImageMetadata = {
               id: `img-${Date.now()}`,
-              url: randomUrl,
+              url: actualUrl,
               filename: fileName,
               altText: fileName.replace('.jpg', '').replace(/-/g, ' '),
               sortOrder: images.length + 1,

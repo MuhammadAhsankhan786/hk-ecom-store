@@ -12,7 +12,7 @@ export const CategoryFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = fals
   const [slug, setSlug] = useState(existingCategory?.slug || '');
   const [description, setDescription] = useState(existingCategory?.description || '');
   const [image, setImage] = useState(existingCategory?.image || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format');
-  const [status, setStatus] = useState<'Active' | 'Inactive'>(existingCategory?.status || 'Active');
+  const [status, setStatus] = useState<'Active' | 'Inactive' | 'Draft' | 'Archived'>(existingCategory?.status || 'Active');
   const [sortOrder, setSortOrder] = useState(existingCategory?.sortOrder || 1);
   const [seoTitle, setSeoTitle] = useState(existingCategory?.seoTitle || '');
   const [seoDescription, setSeoDescription] = useState(existingCategory?.seoDescription || '');
@@ -174,7 +174,7 @@ export const CategoryFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = fals
                 <label className="block font-bold text-[#111111] mb-1">Publishing Status</label>
                 <select
                   value={status}
-                  onChange={e => setStatus(e.target.value as 'Active' | 'Inactive')}
+                  onChange={e => setStatus(e.target.value as any)}
                   className="w-full px-3 py-2.5 bg-[#F8F7F3] border border-[#E8E5DE] rounded-xl text-xs font-bold"
                 >
                   <option value="Active">Active (Visible in Storefront)</option>

@@ -48,6 +48,8 @@ function ShopContent() {
           image: p.images[0]?.url || 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=600&h=600&fit=crop&auto=format',
           images: p.images.map((img: any) => img.url),
           badge: p.isFeatured ? 'new' : undefined,
+          publishedAt: p.publishedAt,
+          status: p.status,
           inStock: p.stock > 0,
           material: p.description || '100% Cotton Satin',
           sizes: p.variants?.map((v: any) => v.size) || ['King', 'Queen'],

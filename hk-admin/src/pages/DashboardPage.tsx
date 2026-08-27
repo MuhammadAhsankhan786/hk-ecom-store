@@ -56,11 +56,13 @@ export const DashboardPage: React.FC = () => {
 
   const maxVal = Math.max(...performanceDataset.map(getMetricValue)) * 1.15;
   const minVal = Math.min(...performanceDataset.map(getMetricValue)) * 0.85;
+  const valRange = maxVal - minVal || 1; // Prevent division by zero
 
   const points = performanceDataset.map((d, i) => {
-    const x = padding + (i / (performanceDataset.length - 1)) * (width - padding * 2);
+    const xProgress = performanceDataset.length > 1 ? (i / (performanceDataset.length - 1)) : 0.5;
+    const x = padding + xProgress * (width - padding * 2);
     const val = getMetricValue(d);
-    const y = height - padding - ((val - minVal) / (maxVal - minVal)) * (height - padding * 2);
+    const y = height - padding - ((val - minVal) / valRange) * (height - padding * 2);
     return { x, y, data: d };
   });
 

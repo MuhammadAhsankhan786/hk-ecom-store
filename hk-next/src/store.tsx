@@ -10,11 +10,11 @@ interface StoreContextType {
   cart: CartItem[]
   wishlist: Product[]
   addToCart: (p: Product, size: string, color: string, qty?: number) => void
-  removeFromCart: (id: number, size: string, color: string) => void
-  updateQty: (id: number, size: string, color: string, qty: number) => void
+  removeFromCart: (id: number | string, size: string, color: string) => void
+  updateQty: (id: number | string, size: string, color: string, qty: number) => void
   clearCart: () => void
   toggleWishlist: (p: Product) => void
-  isInWishlist: (id: number) => boolean
+  isInWishlist: (id: number | string) => boolean
   cartCount: number
   cartTotal: number
 }
@@ -41,11 +41,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     })
   }
 
-  const removeFromCart = (id: number, size: string, color: string) => {
+  const removeFromCart = (id: number | string, size: string, color: string) => {
     setCart(prev => prev.filter(i => !(i.id === id && i.selectedSize === size && i.selectedColor === color)))
   }
 
-  const updateQty = (id: number, size: string, color: string, qty: number) => {
+  const updateQty = (id: number | string, size: string, color: string, qty: number) => {
     if (qty < 1) {
       removeFromCart(id, size, color)
       return
@@ -63,7 +63,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     )
   }
 
-  const isInWishlist = (id: number) => wishlist.some(p => p.id === id)
+  const isInWishlist = (id: number | string) => wishlist.some(p => p.id === id)
 
   const cartCount = cart.reduce((sum, i) => sum + i.qty, 0)
   const cartTotal = cart.reduce((sum, i) => sum + i.price * i.qty, 0)

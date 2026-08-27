@@ -99,19 +99,35 @@ model Address {
   @@map("addresses")
 }
 
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum CategoryStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
 model Category {
-  id          String     @id @default(uuid())
-  name        String     @unique
-  slug        String     @unique
+  id          String         @id @default(uuid())
+  name        String         @unique
+  slug        String         @unique
   description String?
   image       String?
   parentId    String?
-  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
-  children    Category[] @relation("CategoryHierarchy")
+  parent      Category?      @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Category[]     @relation("CategoryHierarchy")
   products    Product[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  status      CategoryStatus @default(PUBLISHED)
+  publishedAt DateTime?      @default(now())
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
+  @@index([slug])
+  @@index([status, publishedAt])
   @@map("categories")
 }
 
@@ -126,20 +142,23 @@ model Collection {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  @@index([slug])
   @@map("collections")
 }
 
 model Product {
-  id           String   @id @default(uuid())
+  id           String        @id @default(uuid())
   name         String
-  slug         String   @unique
+  slug         String        @unique
   description  String
-  sku          String   @unique
+  sku          String        @unique
   price        Float
   salePrice    Float?
-  stock        Int      @default(0)
-  isFeatured   Boolean  @default(false)
-  isArchived   Boolean  @default(false)
+  stock        Int           @default(0)
+  isFeatured   Boolean       @default(false)
+  isArchived   Boolean       @default(false)
+  status       ProductStatus @default(DRAFT)
+  publishedAt  DateTime?
 
   categoryId   String?
   category     Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
@@ -154,6 +173,10 @@ model Product {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([categoryId])
+  @@index([collectionId])
+  @@index([slug])
+  @@index([status, publishedAt])
   @@map("products")
 }
 

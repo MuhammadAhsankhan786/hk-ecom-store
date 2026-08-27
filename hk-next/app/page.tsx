@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import ProductCard from '../src/components/ProductCard'
-import { products } from '../src/data/products'
+import { products, type Product } from '../src/data/products'
+import { fetchProductsFromAPI } from '../src/services/api'
 
 const heroSlides = [
   {
@@ -50,36 +51,36 @@ const categories = [
   {
     name: 'Bedsheets',
     desc: 'Pure cotton, satin & digital prints',
-    image: 'https://images.unsplash.com/photo-1639690222869-1e608aa51f82?w=800&h=1000&fit=crop&q=100&auto=format',
+    image: 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=800&h=1000&fit=crop&q=100&auto=format',
     to: '/shop?category=Bedsheets',
   },
   {
     name: 'Comforters',
-    desc: 'All-season & winter warmth',
+    desc: 'Heavy winter duvets & microgel quilts',
     image: 'https://images.unsplash.com/photo-1623944436679-5412c658a358?w=800&h=1000&fit=crop&q=100&auto=format',
     to: '/shop?category=Comforters',
   },
   {
     name: 'Blankets',
-    desc: 'Cashmere blends & cozy weaves',
+    desc: 'Double-ply mink & cozy fleece blankets',
     image: 'https://images.unsplash.com/photo-1619459074324-33d5f591c53e?w=800&h=1000&fit=crop&q=100&auto=format',
     to: '/shop?category=Blankets',
   },
   {
     name: 'Cushions',
-    desc: 'Decorative & accent pieces',
-    image: 'https://images.unsplash.com/photo-1685122121706-a7d632dec1df?w=800&h=1000&fit=crop&q=100&auto=format',
+    desc: 'Gold embroidered & velvet cushions',
+    image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=1000&fit=crop&q=100&auto=format',
     to: '/shop?category=Cushions',
   },
   {
     name: 'Collections',
-    desc: 'Curated seasonal sets',
-    image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&h=1000&fit=crop&q=100&auto=format',
+    desc: 'Royal bridal & seasonal collections',
+    image: 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&h=1000&fit=crop&q=100&auto=format',
     to: '/shop',
   },
   {
     name: 'New Arrivals',
-    desc: 'Fresh styles, just landed',
+    desc: 'Fresh luxury styles, just landed',
     image: 'https://images.unsplash.com/photo-1685122121697-f4515ea401b0?w=800&h=1000&fit=crop&q=100&auto=format',
     to: '/shop?badge=new',
   },
@@ -200,6 +201,43 @@ const trustItems = [
 export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
+  const [liveProducts, setLiveProducts] = useState<Product[]>(products)
+
+  // Fetch live products from NestJS REST API on mount
+  useEffect(() => {
+    async function loadAPIProducts() {
+      try {
+        const res = await fetchProductsFromAPI()
+        if (res && res.data && res.data.length > 0) {
+          const mapped: Product[] = res.data.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            slug: p.slug,
+            category: p.category?.name || 'Bedsheets',
+            price: p.price,
+            oldPrice: p.salePrice || undefined,
+            rating: 5.0,
+            reviews: p.reviews?.length || 12,
+            image: p.images && p.images.length > 0 ? p.images[0].url : 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=600&h=600&fit=crop&auto=format',
+            images: p.images ? p.images.map((img: any) => img.url) : [],
+            badge: p.isFeatured ? 'new' : undefined,
+            publishedAt: p.publishedAt,
+            status: p.status,
+            inStock: p.stock > 0,
+            material: p.description || '100% Cotton Satin',
+            sizes: p.variants?.map((v: any) => v.size) || ['King', 'Queen'],
+            colors: p.variants?.map((v: any) => v.color) || ['Gold', 'Maroon'],
+            description: p.description,
+            sku: p.sku,
+          }))
+          setLiveProducts(mapped)
+        }
+      } catch (err) {
+        console.warn('Backend API connection pending or offline, fallback to store state:', err)
+      }
+    }
+    loadAPIProducts()
+  }, [])
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -344,16 +382,16 @@ export default function Home() {
   const prevSlide = () => setCurrentSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length)
 
   const categoryTabs = [
-    { id: 'All', label: 'All Products', count: products.length },
-    { id: 'Bedsheets', label: 'Bedsheets', count: products.filter(p => p.category === 'Bedsheets').length },
-    { id: 'Comforters', label: 'Comforters', count: products.filter(p => p.category === 'Comforters').length },
-    { id: 'Blankets', label: 'Blankets', count: products.filter(p => p.category === 'Blankets').length },
-    { id: 'Cushions', label: 'Cushions', count: products.filter(p => p.category === 'Cushions').length },
+    { id: 'All', label: 'All Products', count: liveProducts.length },
+    { id: 'Bedsheets', label: 'Bedsheets', count: liveProducts.filter(p => p.category === 'Bedsheets').length },
+    { id: 'Comforters', label: 'Comforters', count: liveProducts.filter(p => p.category === 'Comforters').length },
+    { id: 'Blankets', label: 'Blankets', count: liveProducts.filter(p => p.category === 'Blankets').length },
+    { id: 'Cushions', label: 'Cushions', count: liveProducts.filter(p => p.category === 'Cushions').length },
   ]
 
   const displayedProducts = selectedCategory === 'All'
-    ? products
-    : products.filter(p => p.category === selectedCategory)
+    ? liveProducts
+    : liveProducts.filter(p => p.category === selectedCategory)
 
   return (
     <main>
@@ -534,14 +572,14 @@ export default function Home() {
           {/* Showing Count Footer */}
           <div className="mt-10 sm:mt-14 text-center">
             <p className="text-xs text-[#6B6B6B] mb-3">
-              Showing <span className="font-bold text-[#111111]">{displayedProducts.length}</span> of <span className="font-bold text-[#111111]">{products.length}</span> total luxury products
+              Showing <span className="font-bold text-[#111111]">{displayedProducts.length}</span> of <span className="font-bold text-[#111111]">{liveProducts.length}</span> total luxury products
             </p>
             {selectedCategory !== 'All' && (
               <button
                 onClick={() => setSelectedCategory('All')}
                 className="inline-block text-[10px] uppercase tracking-widest text-[#D4AF37] font-semibold border-b border-[#D4AF37] pb-0.5 hover:text-[#111111] hover:border-[#111111] transition-colors"
               >
-                View All Categories ({products.length} Products) →
+                View All Categories ({liveProducts.length} Products) →
               </button>
             )}
           </div>

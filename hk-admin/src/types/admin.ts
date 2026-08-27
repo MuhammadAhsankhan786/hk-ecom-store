@@ -52,10 +52,10 @@ export interface Category {
   parentId?: string;
   parentName?: string;
   productsCount: number;
-  status: 'Active' | 'Inactive';
-  sortOrder: number;
-  seoTitle: string;
-  seoDescription: string;
+  status: 'Active' | 'Inactive' | 'Draft' | 'Archived';
+  sortOrder?: number;
+  seoTitle?: string;
+  seoDescription?: string;
 }
 
 export interface Collection {

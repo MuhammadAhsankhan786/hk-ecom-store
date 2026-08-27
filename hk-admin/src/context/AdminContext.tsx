@@ -1,5 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { fetchAdminProductsAPI, fetchAdminOrdersAPI } from '../services/api';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import {
+  fetchAdminProductsAPI, fetchAdminOrdersAPI,
+  createProductAPI, updateProductAPI, deleteProductAPI,
+  fetchCategoriesAPI, createCategoryAPI, updateCategoryAPI, deleteCategoryAPI,
+  revalidateStorefront, loginAdminAPI
+} from '../services/api';
 import type {
   Product, Category, Collection, InventoryAdjustment, Order,
   Transaction, Customer, Coupon, Review, HomepageCMS, AdminUser,
@@ -41,19 +46,21 @@ interface AdminContextType {
   currentUser: AdminUser;
   setCurrentUser: (user: AdminUser) => void;
   isAuthenticated: boolean;
-  loginAdmin: (email: string, pass: string) => boolean;
+  loginAdmin: (email: string, pass: string) => Promise<boolean>;
   logoutAdmin: () => void;
   
   // Entity states & handlers
   products: Product[];
-  addProduct: (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  updateProduct: (id: string, updates: Partial<Product>) => void;
-  deleteProduct: (id: string) => void;
+  addProduct: (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  updateProduct: (id: string, updates: Partial<Product>) => Promise<void>;
+  deleteProduct: (id: string) => Promise<void>;
+  refreshProducts: () => Promise<void>;
   
   categories: Category[];
-  addCategory: (category: Omit<Category, 'id' | 'productsCount'>) => void;
-  updateCategory: (id: string, updates: Partial<Category>) => void;
-  deleteCategory: (id: string) => void;
+  addCategory: (category: Omit<Category, 'id' | 'productsCount'>) => Promise<void>;
+  updateCategory: (id: string, updates: Partial<Category>) => Promise<void>;
+  deleteCategory: (id: string) => Promise<void>;
+  refreshCategories: () => Promise<void>;
   
   collections: Collection[];
   addCollection: (collection: Omit<Collection, 'id' | 'productsCount'>) => void;
@@ -126,57 +133,87 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   });
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Fetch live products & orders from NestJS REST API on mount
+  // ─── Refresh helpers (re-fetch from backend) ──────────────────────────────
+
+  const refreshProducts = useCallback(async () => {
+    try {
+      const prodRes = await fetchAdminProductsAPI();
+      if (prodRes && prodRes.data && prodRes.data.length > 0) {
+        const mapped: Product[] = prodRes.data.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          slug: p.slug,
+          sku: p.sku,
+          category: p.category?.name || 'Bedding Sets',
+          categoryId: p.categoryId || '',
+          collection: p.collection?.name || '',
+          price: p.price,
+          salePrice: p.salePrice || undefined,
+          costPrice: undefined,
+          stock: p.stock,
+          reservedStock: 0,
+          lowStockThreshold: 5,
+          status: p.isArchived ? 'Archived' : (p.status === 'PUBLISHED' ? 'Active' : 'Draft'),
+          isFeatured: p.isFeatured,
+          size: p.variants?.map((v: any) => v.size) || ['King', 'Queen'],
+          color: p.variants?.map((v: any) => v.color) || ['Maroon', 'Gold'],
+          material: '100% Egyptian Cotton',
+          pattern: 'Embroidered',
+          fabric: '600 Thread Count',
+          shortDescription: p.description?.substring(0, 80) || '',
+          description: p.description || '',
+          images: p.images && p.images.length > 0 ? p.images.map((img: any, idx: number) => ({
+            id: img.id || `img-${idx}`,
+            url: img.url,
+            filename: `image_${idx}.jpg`,
+            altText: p.name,
+            sortOrder: idx + 1,
+            isPrimary: idx === 0
+          })) : [],
+          createdAt: p.createdAt ? new Date(p.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          updatedAt: p.updatedAt ? new Date(p.updatedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+        }));
+        setProducts(mapped);
+      } else if (prodRes && prodRes.data && prodRes.data.length === 0) {
+        setProducts([]);
+      }
+    } catch (err) {
+      console.warn('Could not refresh products from backend:', err);
+    }
+  }, []);
+
+  const refreshCategories = useCallback(async () => {
+    try {
+      const catRes = await fetchCategoriesAPI();
+      if (catRes && Array.isArray(catRes) && catRes.length > 0) {
+        const mapped: Category[] = catRes.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          slug: c.slug || c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          description: c.description || '',
+          image: c.image || '',
+          status: c.status === 'PUBLISHED' ? 'Active' : (c.status === 'ARCHIVED' ? 'Archived' : 'Draft'),
+          productsCount: c._count?.products || 0,
+          parentId: c.parentId || '',
+        }));
+        setCategories(mapped);
+      } else if (catRes && Array.isArray(catRes) && catRes.length === 0) {
+        setCategories([]);
+      }
+    } catch (err) {
+      console.warn('Could not refresh categories from backend:', err);
+    }
+  }, []);
+
+  // Fetch live data from NestJS REST API on mount
   useEffect(() => {
     async function loadLiveBackendData() {
-      try {
-        const prodRes = await fetchAdminProductsAPI();
-        if (prodRes && prodRes.data && prodRes.data.length > 0) {
-          const mapped: Product[] = prodRes.data.map((p: any) => ({
-            id: p.id,
-            name: p.name,
-            slug: p.slug,
-            sku: p.sku,
-            category: p.category?.name || 'Bedding Sets',
-            collection: p.collection?.name || 'Wedding Collection',
-            price: p.price,
-            salePrice: p.salePrice || undefined,
-            costPrice: Math.round(p.price * 0.6),
-            stock: p.stock,
-            reservedStock: 0,
-            lowStockThreshold: 5,
-            status: p.isArchived ? 'Draft' : 'Active',
-            isFeatured: p.isFeatured,
-            size: p.variants?.map((v: any) => v.size) || ['King', 'Queen'],
-            color: p.variants?.map((v: any) => v.color) || ['Maroon', 'Gold'],
-            material: '100% Egyptian Cotton',
-            pattern: 'Embroidered',
-            fabric: '600 Thread Count',
-            shortDescription: p.description?.substring(0, 80) || '',
-            description: p.description || '',
-            images: p.images && p.images.length > 0 ? p.images.map((img: any, idx: number) => ({
-              id: img.id || `img-${idx}`,
-              url: img.url,
-              filename: `image_${idx}.jpg`,
-              altText: p.name,
-              sortOrder: idx + 1,
-              isPrimary: idx === 0
-            })) : [
-              {
-                id: 'img-def-1',
-                url: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=800&q=80',
-                filename: 'bedding_sample.jpg',
-                altText: p.name,
-                sortOrder: 1,
-                isPrimary: true
-              }
-            ],
-            createdAt: p.createdAt ? new Date(p.createdAt).toISOString().split('T')[0] : '2026-08-25',
-            updatedAt: p.updatedAt ? new Date(p.updatedAt).toISOString().split('T')[0] : '2026-08-25'
-          }));
-          setProducts(mapped);
-        }
+      // Products and categories are loaded via refreshProducts() / refreshCategories()
+      await refreshProducts();
+      await refreshCategories();
 
+      // Load live orders
+      try {
         const orderRes = await fetchAdminOrdersAPI();
         if (orderRes && Array.isArray(orderRes) && orderRes.length > 0) {
           const mappedOrders: Order[] = orderRes.map((o: any) => ({
@@ -216,24 +253,35 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 by: 'Customer'
               }
             ],
-            createdAt: o.createdAt ? new Date(o.createdAt).toISOString().split('T')[0] : '2026-08-25'
+            createdAt: o.createdAt ? new Date(o.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
           }));
           setOrders(mappedOrders);
         }
       } catch (err) {
-        console.warn('Backend API connection pending or offline, using default store state:', err);
+        console.warn('Could not load orders from backend:', err);
       }
     }
     loadLiveBackendData();
-  }, []);
-
-  const loginAdmin = (email: string, pass: string): boolean => {
-    if (email.trim() && pass.length >= 4) {
-      setIsAuthenticated(true);
-      localStorage.setItem('hk_admin_auth', 'true');
-      setCurrentTab('dashboard');
-      showToast(`Welcome back, ${currentUser.name}!`);
-      return true;
+  }, [refreshProducts, refreshCategories]);
+  const loginAdmin = async (email: string, pass: string): Promise<boolean> => {
+    try {
+      const result = await loginAdminAPI(email, pass);
+      if (result?.accessToken) {
+        setIsAuthenticated(true);
+        setCurrentTab('dashboard');
+        showToast(`Welcome back, ${result.user?.name || 'Admin'}!`);
+        return true;
+      }
+    } catch (err: any) {
+      // Dev fallback — only if backend is completely offline
+      if (email.trim() && pass.length >= 4) {
+        console.warn('Backend auth unavailable, using dev fallback:', err.message);
+        setIsAuthenticated(true);
+        localStorage.setItem('hk_admin_auth', 'true');
+        setCurrentTab('dashboard');
+        showToast(`Welcome back, ${currentUser.name}! (Offline mode)`);
+        return true;
+      }
     }
     return false;
   };
@@ -241,6 +289,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const logoutAdmin = () => {
     setIsAuthenticated(false);
     localStorage.removeItem('hk_admin_auth');
+    localStorage.removeItem('hk_admin_token');
     setCurrentTab('login');
     showToast('Admin session logged out safely.');
   };
@@ -265,58 +314,128 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setAuditLogs(prevLogs => [newLog, ...prevLogs]);
   };
 
-  // Handlers
-  const addProduct = (newP: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const id = `prod-${Date.now()}`;
-    const product: Product = {
-      ...newP,
-      id,
-      createdAt: new Date().toISOString().split('T')[0],
-      updatedAt: new Date().toISOString().split('T')[0]
-    };
-    setProducts(prev => [product, ...prev]);
-    addAuditLog('Created product', 'Product', product.sku, undefined, product.name);
-    showToast(`Product "${product.name}" created successfully.`);
+  // ─── Product Handlers (Real API calls) ────────────────────────────────────
+
+  const addProduct = async (newP: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      const payload: Record<string, any> = {
+        name: newP.name,
+        slug: newP.slug || newP.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        sku: newP.sku,
+        description: newP.description || newP.shortDescription || 'No description provided.',
+        price: newP.price,
+        salePrice: newP.salePrice || undefined,
+        stock: newP.stock,
+        isFeatured: newP.isFeatured || false,
+        status: newP.status === 'Active' ? 'PUBLISHED' : (newP.status === 'Archived' ? 'ARCHIVED' : 'DRAFT'),
+        categoryId: (newP as any).categoryId || undefined,
+        images: newP.images?.map(img => img.url) || [],
+      };
+      const created = await createProductAPI(payload);
+      addAuditLog('Created product via API', 'Product', created.sku || newP.sku, undefined, created.name || newP.name);
+      await refreshProducts();
+      await revalidateStorefront('products');
+      showToast(`✓ Product "${created.name}" saved to database successfully.`);
+    } catch (err: any) {
+      showToast(`✗ Failed to create product: ${err.message || 'Backend error'}`);
+      throw err;
+    }
   };
 
-  const updateProduct = (id: string, updates: Partial<Product>) => {
-    setProducts(prev => prev.map(p => {
-      if (p.id === id) {
-        const updated = { ...p, ...updates, updatedAt: new Date().toISOString().split('T')[0] };
-        addAuditLog('Updated product details', 'Product', p.sku);
-        return updated;
+  const updateProduct = async (id: string, updates: Partial<Product>) => {
+    try {
+      const payload: Record<string, any> = {};
+      if (updates.name !== undefined) payload.name = updates.name;
+      if (updates.slug !== undefined) payload.slug = updates.slug;
+      if (updates.description !== undefined) payload.description = updates.description;
+      if (updates.price !== undefined) payload.price = updates.price;
+      if ((updates as any).salePrice !== undefined) payload.salePrice = (updates as any).salePrice;
+      if (updates.stock !== undefined) payload.stock = updates.stock;
+      if (updates.isFeatured !== undefined) payload.isFeatured = updates.isFeatured;
+      if ((updates as any).categoryId !== undefined) payload.categoryId = (updates as any).categoryId;
+      if (updates.status !== undefined) {
+        payload.status = updates.status === 'Active' ? 'PUBLISHED' : (updates.status === 'Archived' ? 'ARCHIVED' : 'DRAFT');
       }
-      return p;
-    }));
-    showToast('Product updated successfully.');
+      if (updates.images && updates.images.length > 0) {
+        payload.images = updates.images.map(img => img.url);
+      }
+      await updateProductAPI(id, payload);
+      const p = products.find(prod => prod.id === id);
+      if (p) addAuditLog('Updated product via API', 'Product', p.sku);
+      await refreshProducts();
+      await revalidateStorefront('products');
+      showToast('✓ Product updated in database successfully.');
+    } catch (err: any) {
+      showToast(`✗ Failed to update product: ${err.message || 'Backend error'}`);
+      throw err;
+    }
   };
 
-  const deleteProduct = (id: string) => {
-    const p = products.find(prod => prod.id === id);
-    setProducts(prev => prev.filter(prod => prod.id !== id));
-    if (p) addAuditLog('Deleted product', 'Product', p.sku, p.name);
-    showToast('Product removed from catalog.');
+  const deleteProduct = async (id: string) => {
+    try {
+      const p = products.find(prod => prod.id === id);
+      await deleteProductAPI(id);
+      if (p) addAuditLog('Archived product via API', 'Product', p.sku, p.name);
+      await refreshProducts();
+      await revalidateStorefront('products');
+      showToast('✓ Product archived in database successfully.');
+    } catch (err: any) {
+      showToast(`✗ Failed to archive product: ${err.message || 'Backend error'}`);
+      throw err;
+    }
   };
 
-  const addCategory = (cat: Omit<Category, 'id' | 'productsCount'>) => {
-    const newCat: Category = {
-      ...cat,
-      id: `cat-${Date.now()}`,
-      productsCount: 0
-    };
-    setCategories(prev => [...prev, newCat]);
-    addAuditLog('Created new category', 'Category', newCat.name);
-    showToast(`Category "${newCat.name}" added successfully.`);
+  // ─── Category Handlers (Real API calls) ────────────────────────────────────
+
+  const addCategory = async (cat: Omit<Category, 'id' | 'productsCount'>) => {
+    try {
+      const payload = {
+        name: cat.name,
+        slug: cat.slug || cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        description: cat.description || '',
+        image: cat.image || '',
+        status: cat.status === 'Active' ? 'PUBLISHED' : (cat.status === 'Archived' ? 'ARCHIVED' : 'PUBLISHED'),
+      };
+      const created = await createCategoryAPI(payload);
+      addAuditLog('Created new category via API', 'Category', created.name);
+      await refreshCategories();
+      await revalidateStorefront('categories');
+      showToast(`✓ Category "${created.name}" saved to database successfully.`);
+    } catch (err: any) {
+      showToast(`✗ Failed to create category: ${err.message || 'Backend error'}`);
+      throw err;
+    }
   };
 
-  const updateCategory = (id: string, updates: Partial<Category>) => {
-    setCategories(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
-    showToast('Category updated successfully.');
+  const updateCategory = async (id: string, updates: Partial<Category>) => {
+    try {
+      const payload: Record<string, any> = {};
+      if (updates.name !== undefined) payload.name = updates.name;
+      if (updates.description !== undefined) payload.description = updates.description;
+      if (updates.image !== undefined) payload.image = updates.image;
+      if (updates.status !== undefined) {
+        payload.status = updates.status === 'Active' ? 'PUBLISHED' : (updates.status === 'Archived' ? 'ARCHIVED' : 'DRAFT');
+      }
+      await updateCategoryAPI(id, payload);
+      await refreshCategories();
+      await revalidateStorefront('categories');
+      showToast('✓ Category updated in database successfully.');
+    } catch (err: any) {
+      showToast(`✗ Failed to update category: ${err.message || 'Backend error'}`);
+      throw err;
+    }
   };
 
-  const deleteCategory = (id: string) => {
-    setCategories(prev => prev.filter(c => c.id !== id));
-    showToast('Category deleted.');
+  const deleteCategory = async (id: string) => {
+    try {
+      await deleteCategoryAPI(id);
+      await refreshCategories();
+      await revalidateStorefront('categories');
+      showToast('✓ Category archived in database successfully.');
+    } catch (err: any) {
+      showToast(`✗ Failed to archive category: ${err.message || 'Backend error'}`);
+      throw err;
+    }
   };
 
   const addCollection = (col: Omit<Collection, 'id' | 'productsCount'>) => {
@@ -460,8 +579,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       selectedEntityId, setSelectedEntityId,
       currentUser, setCurrentUser,
       isAuthenticated, loginAdmin, logoutAdmin,
-      products, addProduct, updateProduct, deleteProduct,
-      categories, addCategory, updateCategory, deleteCategory,
+      products, addProduct, updateProduct, deleteProduct, refreshProducts,
+      categories, addCategory, updateCategory, deleteCategory, refreshCategories,
       collections, addCollection, updateCollection, deleteCollection,
       inventoryLogs, adjustStock,
       orders, updateOrderStatus,

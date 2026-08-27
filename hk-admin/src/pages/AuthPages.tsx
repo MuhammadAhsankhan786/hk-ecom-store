@@ -7,10 +7,10 @@ import type { UserRole } from '../types/admin';
 export const LoginPage: React.FC = () => {
   const { loginAdmin, setCurrentUser, adminUsers, setCurrentTab } = useAdmin();
   const [email, setEmail] = useState('admin@hkfabric.pk');
-  const [password, setPassword] = useState('Password123!');
+  const [password, setPassword] = useState('admin123');
   const [selectedRole, setSelectedRole] = useState<UserRole>('Super Admin');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const matched = adminUsers.find(u => u.email === email) || {
       id: 'u-1',
@@ -22,7 +22,7 @@ export const LoginPage: React.FC = () => {
     };
 
     setCurrentUser({ ...matched, role: selectedRole });
-    loginAdmin(email, password);
+    await loginAdmin(email, password);
   };
 
   return (

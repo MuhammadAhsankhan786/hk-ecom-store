@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { ProductStatus } from '@prisma/client';
 
 export class VariantDto {
   @ApiProperty({ example: 'SKU-BED-KING-NVY' })
@@ -66,6 +67,15 @@ export class CreateProductDto {
   @IsOptional()
   @IsBoolean()
   isFeatured?: boolean;
+
+  @ApiProperty({ enum: ProductStatus, default: ProductStatus.DRAFT, required: false })
+  @IsOptional()
+  @IsEnum(ProductStatus)
+  status?: ProductStatus;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  publishedAt?: Date;
 
   @ApiProperty({ required: false })
   @IsOptional()

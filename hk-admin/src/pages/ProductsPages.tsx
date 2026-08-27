@@ -194,7 +194,10 @@ export const ProductFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = false
   const [name, setName] = useState(existing?.name || '');
   const [slug, setSlug] = useState(existing?.slug || '');
   const [sku, setSku] = useState(existing?.sku || `HK-BED-00${products.length + 1}`);
-  const [category, setCategory] = useState(existing?.category || categories[0]?.name || 'Bedding Sets');
+  // Use categoryId (UUID) as the key sent to backend
+  const [categoryId, setCategoryId] = useState(
+    (existing as any)?.categoryId || categories[0]?.id || ''
+  );
   const [collection, setCollection] = useState(existing?.collection || collections[0]?.name || 'Wedding Collection');
   const [price, setPrice] = useState(existing?.price || 15000);
   const [salePrice, setSalePrice] = useState<number | undefined>(existing?.salePrice);
@@ -206,26 +209,21 @@ export const ProductFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = false
   const [shortDescription, setShortDescription] = useState(existing?.shortDescription || '');
   const [description, setDescription] = useState(existing?.description || '');
   const [status, setStatus] = useState<'Active' | 'Draft'>(existing?.status === 'Archived' ? 'Draft' : (existing?.status || 'Active'));
-  const [images, setImages] = useState<ImageMetadata[]>(existing?.images || [
-    {
-      id: 'img-def-1',
-      url: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=800&q=80',
-      filename: 'bedding_sample.jpg',
-      altText: 'HK Fabric Bedding Sample',
-      sortOrder: 1,
-      isPrimary: true
-    }
-  ]);
+  const [images, setImages] = useState<ImageMetadata[]>(existing?.images || []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !sku) return;
+
+    // Resolve human-readable category name for display
+    const selectedCategory = categories.find(c => c.id === categoryId);
 
     const payload = {
       name,
       slug: slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       sku,
-      category,
+      category: selectedCategory?.name || 'Bedding Sets',
+      categoryId,  // UUID sent to backend
       collection,
       price: Number(price),
       salePrice: salePrice ? Number(salePrice) : undefined,
@@ -245,13 +243,16 @@ export const ProductFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = false
       images
     };
 
-    if (isEdit && existing) {
-      updateProduct(existing.id, payload);
-    } else {
-      addProduct(payload);
+    try {
+      if (isEdit && existing) {
+        await updateProduct(existing.id, payload);
+      } else {
+        await addProduct(payload);
+      }
+      setCurrentTab('products');
+    } catch {
+      // Error toast is shown by AdminContext; stay on form so user can retry
     }
-
-    setCurrentTab('products');
   };
 
   return (
@@ -409,12 +410,15 @@ export const ProductFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = false
               <div>
                 <label className="block text-xs font-bold text-[#111111] mb-1">Main Category</label>
                 <select
-                  value={category}
-                  onChange={e => setCategory(e.target.value)}
+                  value={categoryId}
+                  onChange={e => setCategoryId(e.target.value)}
                   className="w-full px-3 py-2 text-xs border border-[#E8E5DE] rounded-lg bg-[#F8F7F3]"
                 >
+                  {categories.length === 0 && (
+                    <option value="">No categories — add one first</option>
+                  )}
                   {categories.map(c => (
-                    <option key={c.id} value={c.name}>{c.name}</option>
+                    <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
               </div>

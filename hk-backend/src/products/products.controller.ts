@@ -18,6 +18,8 @@ export class ProductsController {
   @ApiQuery({ name: 'collectionId', required: false })
   @ApiQuery({ name: 'search', required: false })
   @ApiQuery({ name: 'isFeatured', required: false, type: Boolean })
+  @ApiQuery({ name: 'includeDrafts', required: false, type: Boolean })
+  @ApiQuery({ name: 'status', required: false, enum: UserRole })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'sortBy', required: false, enum: ['price_asc', 'price_desc', 'newest', 'popularity'] })
@@ -26,13 +28,16 @@ export class ProductsController {
     @Query('collectionId') collectionId?: string,
     @Query('search') search?: string,
     @Query('isFeatured') isFeatured?: boolean,
+    @Query('includeDrafts') includeDrafts?: string,
+    @Query('status') status?: any,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('sortBy') sortBy?: 'price_asc' | 'price_desc' | 'newest' | 'popularity',
   ) {
     const p = page ? parseInt(page, 10) : 1;
     const l = limit ? parseInt(limit, 10) : 20;
-    return this.productsService.findAll({ categoryId, collectionId, search, isFeatured, page: p, limit: l, sortBy });
+    const incDrafts = includeDrafts === 'true';
+    return this.productsService.findAll({ categoryId, collectionId, search, isFeatured, includeDrafts: incDrafts, status, page: p, limit: l, sortBy });
   }
 
   @Get('categories')
