@@ -207,6 +207,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Fetch live data from NestJS REST API on mount
   useEffect(() => {
+    if (!isAuthenticated) return;
+    
     async function loadLiveBackendData() {
       // Products and categories are loaded via refreshProducts() / refreshCategories()
       await refreshProducts();
