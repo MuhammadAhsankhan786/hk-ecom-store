@@ -5,7 +5,11 @@
  */
 import { toast } from 'react-hot-toast';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE = import.meta.env.VITE_API_URL || (
+  typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname)
+    ? 'https://hk-backend-bice.vercel.app'
+    : 'http://localhost:5000'
+);
 
 function getAuthHeader(): Record<string, string> {
   const token = localStorage.getItem('hk_admin_token');
@@ -181,10 +185,11 @@ export async function uploadMediaToCloudinaryAPI(file: File, folder = 'products'
 
 export async function revalidateStorefront(tag: string) {
   try {
-    const storefrontUrl = import.meta.env.VITE_STOREFRONT_URL || (typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname) ? window.location.origin : 'http://localhost:3000');
-    if (storefrontUrl.includes('localhost') && typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname)) {
-      return;
-    }
+    const storefrontUrl = import.meta.env.VITE_STOREFRONT_URL || (
+      typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname)
+        ? 'https://hk-ecom-store.vercel.app'
+        : 'http://localhost:3000'
+    );
     const secret = 'hk_fabric_revalidation_secret_2026';
     await fetch(`${storefrontUrl}/api/revalidate?tag=${tag}&secret=${secret}`);
   } catch {

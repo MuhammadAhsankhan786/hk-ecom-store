@@ -3,16 +3,13 @@
  * Connects hk-next directly to NestJS REST Backend (http://localhost:5000)
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || (
+  typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname)
+    ? 'https://hk-backend-bice.vercel.app'
+    : 'http://localhost:5000'
+);
 
 export async function fetchProductsFromAPI(params?: { category?: string; search?: string; page?: number; limit?: number }) {
-  // Prevent firing request to localhost:5000 if app is running on live production Vercel domain without NEXT_PUBLIC_API_URL configured
-  if (typeof window !== 'undefined') {
-    const isLiveDomain = !['localhost', '127.0.0.1'].includes(window.location.hostname);
-    if (isLiveDomain && (API_BASE.includes('localhost') || API_BASE.includes('127.0.0.1'))) {
-      return null;
-    }
-  }
 
   try {
     const url = new URL(`${API_BASE}/products`);
@@ -39,13 +36,6 @@ export async function fetchProductsFromAPI(params?: { category?: string; search?
 }
 
 export async function fetchCategoriesFromAPI() {
-  if (typeof window !== 'undefined') {
-    const isLiveDomain = !['localhost', '127.0.0.1'].includes(window.location.hostname);
-    if (isLiveDomain && (API_BASE.includes('localhost') || API_BASE.includes('127.0.0.1'))) {
-      return null;
-    }
-  }
-
   try {
     const res = await fetch(`${API_BASE}/products/categories`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
