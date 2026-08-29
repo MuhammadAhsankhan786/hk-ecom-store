@@ -6,6 +6,14 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export async function fetchProductsFromAPI(params?: { category?: string; search?: string; page?: number; limit?: number }) {
+  // Prevent firing request to localhost:5000 if app is running on live production Vercel domain without NEXT_PUBLIC_API_URL configured
+  if (typeof window !== 'undefined') {
+    const isLiveDomain = !['localhost', '127.0.0.1'].includes(window.location.hostname);
+    if (isLiveDomain && (API_BASE.includes('localhost') || API_BASE.includes('127.0.0.1'))) {
+      return null;
+    }
+  }
+
   try {
     const url = new URL(`${API_BASE}/products`);
     if (params?.category) url.searchParams.append('category', params.category);
@@ -26,12 +34,18 @@ export async function fetchProductsFromAPI(params?: { category?: string; search?
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (err) {
-    console.warn('Backend API offline or unreachable, falling back to cached catalog state:', err);
     return null;
   }
 }
 
 export async function fetchCategoriesFromAPI() {
+  if (typeof window !== 'undefined') {
+    const isLiveDomain = !['localhost', '127.0.0.1'].includes(window.location.hostname);
+    if (isLiveDomain && (API_BASE.includes('localhost') || API_BASE.includes('127.0.0.1'))) {
+      return null;
+    }
+  }
+
   try {
     const res = await fetch(`${API_BASE}/products/categories`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);

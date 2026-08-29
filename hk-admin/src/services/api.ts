@@ -181,8 +181,12 @@ export async function uploadMediaToCloudinaryAPI(file: File, folder = 'products'
 
 export async function revalidateStorefront(tag: string) {
   try {
+    const storefrontUrl = import.meta.env.VITE_STOREFRONT_URL || (typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname) ? window.location.origin : 'http://localhost:3000');
+    if (storefrontUrl.includes('localhost') && typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname)) {
+      return;
+    }
     const secret = 'hk_fabric_revalidation_secret_2026';
-    await fetch(`http://localhost:3000/api/revalidate?tag=${tag}&secret=${secret}`);
+    await fetch(`${storefrontUrl}/api/revalidate?tag=${tag}&secret=${secret}`);
   } catch {
     // Non-critical — storefront cache revalidation failure should not block admin operations
   }
