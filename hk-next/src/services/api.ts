@@ -3,21 +3,29 @@
  * Connects hk-next directly to NestJS REST Backend (http://localhost:5000)
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || (
-  typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname)
-    ? 'https://hk-backend-bice.vercel.app'
-    : 'http://localhost:5000'
-);
+function getApiBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host !== 'localhost' && host !== '127.0.0.1') {
+      return 'https://hk-backend-bice.vercel.app';
+    }
+  }
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://hk-backend-bice.vercel.app';
+  }
+  return 'http://localhost:5000';
+}
 
 export async function fetchProductsFromAPI(params?: { category?: string; search?: string; page?: number; limit?: number }) {
-
   try {
-    const url = new URL(`${API_BASE}/products`);
+    const url = new URL(`${getApiBaseUrl()}/products`);
     if (params?.category) url.searchParams.append('category', params.category);
     if (params?.search) url.searchParams.append('search', params.search);
     if (params?.page) url.searchParams.append('page', String(params.page));
     if (params?.limit) url.searchParams.append('limit', String(params.limit));
-    // Cache buster: append current timestamp so browser never returns stale cached response
     url.searchParams.append('_t', Date.now().toString());
 
     const res = await fetch(url.toString(), {
@@ -37,7 +45,7 @@ export async function fetchProductsFromAPI(params?: { category?: string; search?
 
 export async function fetchCategoriesFromAPI() {
   try {
-    const res = await fetch(`${API_BASE}/products/categories`, { cache: 'no-store' });
+    const res = await fetch(`${getApiBaseUrl()}/products/categories`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (err) {
@@ -46,7 +54,7 @@ export async function fetchCategoriesFromAPI() {
 }
 
 export async function createOrderAPI(orderData: any) {
-  const res = await fetch(`${API_BASE}/orders`, {
+  const res = await fetch(`${getApiBaseUrl()}/orders`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -5,11 +5,31 @@
  */
 import { toast } from 'react-hot-toast';
 
-const API_BASE = import.meta.env.VITE_API_URL || (
-  typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname)
-    ? 'https://hk-backend-bice.vercel.app'
-    : 'http://localhost:5000'
-);
+function getApiBaseUrl(): string {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host !== 'localhost' && host !== '127.0.0.1') {
+      return 'https://hk-backend-bice.vercel.app';
+    }
+  }
+  return 'http://localhost:5000';
+}
+
+function getStorefrontUrl(): string {
+  if (import.meta.env.VITE_STOREFRONT_URL) {
+    return import.meta.env.VITE_STOREFRONT_URL;
+  }
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host !== 'localhost' && host !== '127.0.0.1') {
+      return 'https://hk-ecom-store.vercel.app';
+    }
+  }
+  return 'http://localhost:3000';
+}
 
 function getAuthHeader(): Record<string, string> {
   const token = localStorage.getItem('hk_admin_token');
@@ -20,7 +40,7 @@ async function apiRequest<T = any>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(`${getApiBaseUrl()}${path}`, {
     ...options,
     headers: {
       ...getAuthHeader(),
@@ -39,10 +59,8 @@ async function apiRequest<T = any>(
     
     if (res.status === 401) {
       errorMessage = "Unauthorized access. Please login again.";
-      // Optionally trigger logout logic here if needed
       localStorage.removeItem('hk_admin_token');
       localStorage.setItem('hk_admin_auth', 'false');
-      // A full reload can force context reset, but better to just show toast
       setTimeout(() => window.location.reload(), 1500);
     }
     
@@ -56,7 +74,7 @@ async function apiRequest<T = any>(
 // ─── AUTH ────────────────────────────────────────────────────────────────────
 
 export async function loginAdminAPI(email: string, password: string) {
-  const res = await fetch(`${API_BASE}/auth/login`, {
+  const res = await fetch(`${getApiBaseUrl()}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -163,7 +181,7 @@ export async function uploadMediaToCloudinaryAPI(file: File, folder = 'products'
   formData.append('folder', folder);
 
   const token = localStorage.getItem('hk_admin_token');
-  const res = await fetch(`${API_BASE}/media/upload`, {
+  const res = await fetch(`${getApiBaseUrl()}/media/upload`, {
     method: 'POST',
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: formData,
@@ -185,13 +203,8 @@ export async function uploadMediaToCloudinaryAPI(file: File, folder = 'products'
 
 export async function revalidateStorefront(tag: string) {
   try {
-    const storefrontUrl = import.meta.env.VITE_STOREFRONT_URL || (
-      typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname)
-        ? 'https://hk-ecom-store.vercel.app'
-        : 'http://localhost:3000'
-    );
     const secret = 'hk_fabric_revalidation_secret_2026';
-    await fetch(`${storefrontUrl}/api/revalidate?tag=${tag}&secret=${secret}`);
+    await fetch(`${getStorefrontUrl()}/api/revalidate?tag=${tag}&secret=${secret}`);
   } catch {
     // Non-critical — storefront cache revalidation failure should not block admin operations
   }
