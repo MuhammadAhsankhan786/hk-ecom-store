@@ -25,6 +25,7 @@ export class ProductsController {
   @ApiQuery({ name: 'sortBy', required: false, enum: ['price_asc', 'price_desc', 'newest', 'popularity'] })
   findAll(
     @Query('categoryId') categoryId?: string,
+    @Query('category') category?: string,
     @Query('collectionId') collectionId?: string,
     @Query('search') search?: string,
     @Query('isFeatured') isFeatured?: boolean,
@@ -34,10 +35,11 @@ export class ProductsController {
     @Query('limit') limit?: string,
     @Query('sortBy') sortBy?: 'price_asc' | 'price_desc' | 'newest' | 'popularity',
   ) {
+    const targetCat = categoryId || category;
     const p = page ? parseInt(page, 10) : 1;
     const l = limit ? parseInt(limit, 10) : 20;
     const incDrafts = includeDrafts === 'true';
-    return this.productsService.findAll({ categoryId, collectionId, search, isFeatured, includeDrafts: incDrafts, status, page: p, limit: l, sortBy });
+    return this.productsService.findAll({ categoryId: targetCat, collectionId, search, isFeatured, includeDrafts: incDrafts, status, page: p, limit: l, sortBy });
   }
 
   @Get('categories')

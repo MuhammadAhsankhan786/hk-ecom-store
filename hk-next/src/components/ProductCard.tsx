@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useStore, type Product } from '../store'
 
@@ -18,33 +18,43 @@ function Stars({ rating }: { rating: number }) {
   )
 }
 
-export function isNewArrival(publishedAt?: string | Date): boolean {
-  if (!publishedAt) return false
-  const pubTime = new Date(publishedAt).getTime()
-  if (isNaN(pubTime)) return false
+export function isNewArrival(publishedAt?: string | Date, createdAt?: string | Date): boolean {
+  const dateStr = publishedAt || createdAt
+  if (!dateStr) return true
+  const pubTime = new Date(dateStr).getTime()
+  if (isNaN(pubTime)) return true
   const diffMs = Date.now() - pubTime
-  return diffMs >= 0 && diffMs <= 24 * 60 * 60 * 1000
+  return diffMs <= 14 * 24 * 60 * 60 * 1000
 }
 
 function BadgeTag({ badge }: { badge: string }) {
-  const styles: Record<string, string> = {
-    sale: 'bg-[#111111] text-white',
-    new: 'bg-[#D4AF37] text-[#111111]',
-    limited: 'bg-[#8B4513] text-white',
-  }
+  const isNew = badge === 'new' || badge === 'NEW ARRIVAL' || badge === 'new arrival'
   return (
-    <span className={`text-[8px] sm:text-[9px] uppercase tracking-widest font-semibold px-1.5 sm:px-2 py-0.5 rounded-sm ${styles[badge] || 'bg-[#111111] text-white'}`}>
-      {badge === 'limited' ? 'Limited' : badge}
+    <span className={`text-[8px] sm:text-[9px] uppercase tracking-widest font-extrabold px-2 py-0.5 rounded-sm shadow-xs ${
+      isNew
+        ? 'bg-[#D4AF37] text-[#111111] border border-[#B89428]'
+        : badge === 'limited'
+        ? 'bg-[#8B4513] text-white'
+        : 'bg-[#111111] text-white'
+    }`}>
+      {isNew ? 'NEW ARRIVAL' : (badge === 'limited' ? 'LIMITED' : badge.toUpperCase())}
     </span>
   )
 }
 
 export default function ProductCard({ product }: { product: Product }) {
   const { addToCart, toggleWishlist, isInWishlist } = useStore()
-  const [imgSrc, setImgSrc] = useState(product.image)
+  const [imgSrc, setImgSrc] = useState(product.image || FALLBACK_IMAGE)
   const inWishlist = isInWishlist(product.id)
   const discount = product.oldPrice ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100) : 0
-  const showNewBadge = product.badge === 'new' || isNewArrival(product.publishedAt)
+  const showNewBadge = product.badge === 'new' || product.badge === 'NEW ARRIVAL' || isNewArrival(product.publishedAt, (product as any).createdAt)
+
+  // Sync state if product image prop updates dynamically from backend
+  useEffect(() => {
+    if (product.image) {
+      setImgSrc(product.image)
+    }
+  }, [product.image])
 
   return (
     <div className="group relative flex flex-col h-full bg-white border border-[#E8E5DE] rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300">
@@ -52,11 +62,16 @@ export default function ProductCard({ product }: { product: Product }) {
       <div className="relative product-img-wrap bg-[#F8F7F3] aspect-square overflow-hidden rounded-t-xl shrink-0">
         <Link href={`/product/${product.slug}`}>
           <img
-            src={imgSrc}
+            src={imgSrc || FALLBACK_IMAGE}
             alt={product.name}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
-            onError={() => setImgSrc(FALLBACK_IMAGE)}
+            onError={() => {
+              // Only trigger fallback image if current imgSrc is a broken URL and not a valid base64 data URL
+              if (imgSrc && !imgSrc.startsWith('data:')) {
+                setImgSrc(FALLBACK_IMAGE)
+              }
+            }}
           />
         </Link>
 

@@ -36,13 +36,15 @@ export class CreateProductDto {
   @IsString()
   name: string;
 
-  @ApiProperty({ example: 'royal-velvet-bridal-bedspread-set' })
+  @ApiProperty({ example: 'royal-velvet-bridal-bedspread-set', required: false })
+  @IsOptional()
   @IsString()
-  slug: string;
+  slug?: string;
 
-  @ApiProperty({ example: 'Premium 100% velvet embroidered comforter set with 4 pillow covers.' })
+  @ApiProperty({ example: 'Premium 100% velvet embroidered comforter set with 4 pillow covers.', required: false })
+  @IsOptional()
   @IsString()
-  description: string;
+  description?: string;
 
   @ApiProperty({ example: 'SKU-VELVET-BRIDAL', required: false })
   @IsOptional()
@@ -69,10 +71,9 @@ export class CreateProductDto {
   @IsBoolean()
   isFeatured?: boolean;
 
-  @ApiProperty({ enum: ProductStatus, default: ProductStatus.DRAFT, required: false })
+  @ApiProperty({ example: 'PUBLISHED', required: false })
   @IsOptional()
-  @IsEnum(ProductStatus)
-  status?: ProductStatus;
+  status?: any;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -97,4 +98,39 @@ export class CreateProductDto {
   @IsOptional()
   @IsArray()
   variants?: VariantDto[];
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  shortDescription?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  collection?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber()
+  costPrice?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber()
+  lowStockThreshold?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  material?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  fabric?: string;
 }

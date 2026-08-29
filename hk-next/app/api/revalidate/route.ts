@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
   try {
     if (tag) {
-      revalidateTag(tag);
+      (revalidateTag as any)(tag, 'max');
     }
     if (path) {
       revalidatePath(path);

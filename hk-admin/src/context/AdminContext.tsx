@@ -320,23 +320,37 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const addProduct = async (newP: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
+      const rawImages = newP.images || [];
+      const imageUrls = rawImages
+        .map((img: any) => (typeof img === 'string' ? img : img?.url))
+        .filter((url): url is string => Boolean(url && typeof url === 'string' && url.trim().length > 0));
+
       const payload: Record<string, any> = {
         name: newP.name,
         slug: newP.slug || newP.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
         sku: newP.sku,
         description: newP.description || newP.shortDescription || 'No description provided.',
-        price: newP.price,
-        salePrice: newP.salePrice || undefined,
-        stock: newP.stock,
+        price: Number(newP.price),
+        salePrice: newP.salePrice ? Number(newP.salePrice) : undefined,
+        stock: Number(newP.stock),
         isFeatured: newP.isFeatured || false,
         status: newP.status === 'Active' ? 'PUBLISHED' : (newP.status === 'Archived' ? 'ARCHIVED' : 'DRAFT'),
-        categoryId: (newP as any).categoryId || undefined,
-        images: newP.images?.map(img => img.url) || [],
+        categoryId: (newP as any).categoryId && (newP as any).categoryId.trim() !== '' ? (newP as any).categoryId : undefined,
+        images: imageUrls,
       };
       const created = await createProductAPI(payload);
       addAuditLog('Created product via API', 'Product', created.sku || newP.sku, undefined, created.name || newP.name);
       await refreshProducts();
       await revalidateStorefront('products');
+      
+      // Trigger instant real-time sync for storefront tabs/windows
+      try {
+        const bc = new BroadcastChannel('hk_catalog_sync');
+        bc.postMessage({ type: 'CATALOG_UPDATED', timestamp: Date.now() });
+        bc.close();
+      } catch {}
+      localStorage.setItem('hk_catalog_last_updated', Date.now().toString());
+
       showToast(`✓ Product "${created.name}" saved to database successfully.`);
     } catch (err: any) {
       showToast(`✗ Failed to create product: ${err.message || 'Backend error'}`);
@@ -350,22 +364,33 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (updates.name !== undefined) payload.name = updates.name;
       if (updates.slug !== undefined) payload.slug = updates.slug;
       if (updates.description !== undefined) payload.description = updates.description;
-      if (updates.price !== undefined) payload.price = updates.price;
-      if ((updates as any).salePrice !== undefined) payload.salePrice = (updates as any).salePrice;
-      if (updates.stock !== undefined) payload.stock = updates.stock;
+      if (updates.price !== undefined) payload.price = Number(updates.price);
+      if ((updates as any).salePrice !== undefined) payload.salePrice = (updates as any).salePrice ? Number((updates as any).salePrice) : undefined;
+      if (updates.stock !== undefined) payload.stock = Number(updates.stock);
       if (updates.isFeatured !== undefined) payload.isFeatured = updates.isFeatured;
-      if ((updates as any).categoryId !== undefined) payload.categoryId = (updates as any).categoryId;
+      if ((updates as any).categoryId !== undefined && (updates as any).categoryId.trim() !== '') payload.categoryId = (updates as any).categoryId;
       if (updates.status !== undefined) {
         payload.status = updates.status === 'Active' ? 'PUBLISHED' : (updates.status === 'Archived' ? 'ARCHIVED' : 'DRAFT');
       }
       if (updates.images && updates.images.length > 0) {
-        payload.images = updates.images.map(img => img.url);
+        payload.images = updates.images
+          .map((img: any) => (typeof img === 'string' ? img : img?.url))
+          .filter((url): url is string => Boolean(url && typeof url === 'string' && url.trim().length > 0));
       }
       await updateProductAPI(id, payload);
       const p = products.find(prod => prod.id === id);
       if (p) addAuditLog('Updated product via API', 'Product', p.sku);
       await refreshProducts();
       await revalidateStorefront('products');
+
+      // Trigger instant real-time sync for storefront tabs/windows
+      try {
+        const bc = new BroadcastChannel('hk_catalog_sync');
+        bc.postMessage({ type: 'CATALOG_UPDATED', timestamp: Date.now() });
+        bc.close();
+      } catch {}
+      localStorage.setItem('hk_catalog_last_updated', Date.now().toString());
+
       showToast('✓ Product updated in database successfully.');
     } catch (err: any) {
       showToast(`✗ Failed to update product: ${err.message || 'Backend error'}`);
@@ -380,6 +405,15 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (p) addAuditLog('Archived product via API', 'Product', p.sku, p.name);
       await refreshProducts();
       await revalidateStorefront('products');
+
+      // Trigger instant real-time sync for storefront tabs/windows
+      try {
+        const bc = new BroadcastChannel('hk_catalog_sync');
+        bc.postMessage({ type: 'CATALOG_UPDATED', timestamp: Date.now() });
+        bc.close();
+      } catch {}
+      localStorage.setItem('hk_catalog_last_updated', Date.now().toString());
+
       showToast('✓ Product archived in database successfully.');
     } catch (err: any) {
       showToast(`✗ Failed to archive product: ${err.message || 'Backend error'}`);

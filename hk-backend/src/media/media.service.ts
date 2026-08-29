@@ -7,9 +7,9 @@ import { Readable } from 'stream';
 export class MediaService {
   constructor(private configService: ConfigService) {
     cloudinary.config({
-      cloud_name: this.configService.get<string>('CLOUDINARY_CLOUD_NAME') || 'hk_fabric_cloud',
-      api_key: this.configService.get<string>('CLOUDINARY_API_KEY') || 'key',
-      api_secret: this.configService.get<string>('CLOUDINARY_API_SECRET') || 'secret',
+      cloud_name: this.configService.get<string>('CLOUDINARY_CLOUD_NAME') || 'dhpqigvzj',
+      api_key: this.configService.get<string>('CLOUDINARY_API_KEY') || '896479657425435',
+      api_secret: this.configService.get<string>('CLOUDINARY_API_SECRET') || 'loy9PoDasQGKUBHjOvIujfgT0MY',
     });
   }
 
@@ -42,9 +42,9 @@ export class MediaService {
 
   generateUploadSignature(folder = 'products') {
     const timestamp = Math.round(new Date().getTime() / 1000);
-    const apiSecret = this.configService.get<string>('CLOUDINARY_API_SECRET') || 'secret';
-    const apiKey = this.configService.get<string>('CLOUDINARY_API_KEY') || 'key';
-    const cloudName = this.configService.get<string>('CLOUDINARY_CLOUD_NAME') || 'hk_fabric_cloud';
+    const apiSecret = this.configService.get<string>('CLOUDINARY_API_SECRET') || 'loy9PoDasQGKUBHjOvIujfgT0MY';
+    const apiKey = this.configService.get<string>('CLOUDINARY_API_KEY') || '896479657425435';
+    const cloudName = this.configService.get<string>('CLOUDINARY_CLOUD_NAME') || 'dhpqigvzj';
 
     const signature = cloudinary.utils.api_sign_request(
       { timestamp, folder },

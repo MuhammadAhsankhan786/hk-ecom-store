@@ -12,8 +12,17 @@ export async function fetchProductsFromAPI(params?: { category?: string; search?
     if (params?.search) url.searchParams.append('search', params.search);
     if (params?.page) url.searchParams.append('page', String(params.page));
     if (params?.limit) url.searchParams.append('limit', String(params.limit));
+    // Cache buster: append current timestamp so browser never returns stale cached response
+    url.searchParams.append('_t', Date.now().toString());
 
-    const res = await fetch(url.toString(), { cache: 'no-store' });
+    const res = await fetch(url.toString(), {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (err) {

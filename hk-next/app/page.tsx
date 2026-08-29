@@ -203,12 +203,14 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
   const [liveProducts, setLiveProducts] = useState<Product[]>(products)
 
-  // Fetch live products from NestJS REST API on mount
+  // Fetch live products from NestJS REST API and sync in real-time without page refresh
   useEffect(() => {
+    let isMounted = true
+
     async function loadAPIProducts() {
       try {
         const res = await fetchProductsFromAPI()
-        if (res && res.data && res.data.length > 0) {
+        if (res && res.data && res.data.length > 0 && isMounted) {
           const mapped: Product[] = res.data.map((p: any) => ({
             id: p.id,
             name: p.name,
@@ -220,8 +222,8 @@ export default function Home() {
             reviews: p.reviews?.length || 12,
             image: p.images && p.images.length > 0 ? p.images[0].url : 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=600&h=600&fit=crop&auto=format',
             images: p.images ? p.images.map((img: any) => img.url) : [],
-            badge: p.isFeatured ? 'new' : undefined,
-            publishedAt: p.publishedAt,
+            badge: 'new',
+            publishedAt: p.publishedAt || p.createdAt,
             status: p.status,
             inStock: p.stock > 0,
             material: p.description || '100% Cotton Satin',
@@ -229,14 +231,39 @@ export default function Home() {
             colors: p.variants?.map((v: any) => v.color) || ['Gold', 'Maroon'],
             description: p.description,
             sku: p.sku,
+            createdAt: p.createdAt,
           }))
-          setLiveProducts(mapped)
+
+          // Sort mapped DB items by date descending so newly created products are #1
+          mapped.sort((a: any, b: any) => {
+            const timeA = new Date(a.publishedAt || a.createdAt || 0).getTime()
+            const timeB = new Date(b.publishedAt || b.createdAt || 0).getTime()
+            return timeB - timeA
+          })
+
+          const existingIds = new Set(mapped.map(m => m.id))
+          const nonDuplicateFallback = products.filter(fp => !existingIds.has(fp.id))
+          setLiveProducts([...mapped, ...nonDuplicateFallback])
         }
       } catch (err) {
         console.warn('Backend API connection pending or offline, fallback to store state:', err)
       }
     }
+
     loadAPIProducts()
+
+    // 1. Fast auto-polling every 1.5 seconds for instant zero-refresh updates
+    const intervalId = setInterval(loadAPIProducts, 1500)
+
+    // 2. Window focus refetching
+    const handleFocus = () => loadAPIProducts()
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      isMounted = false
+      clearInterval(intervalId)
+      window.removeEventListener('focus', handleFocus)
+    }
   }, [])
 
   useEffect(() => {

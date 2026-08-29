@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ProductStatus } from '@prisma/client';
@@ -116,98 +116,204 @@ export class ProductsService {
   }
 
   async create(dto: CreateProductDto) {
-    const { images, variants, categoryId, status, ...productData } = dto;
+    try {
+      const { images, variants, categoryId, collectionId, status } = dto;
 
-    let finalCategoryId = categoryId;
-    if (categoryId) {
-      const cat = await this.prisma.category.findFirst({
-        where: { OR: [{ id: categoryId }, { name: categoryId }, { slug: categoryId }] },
+      let finalCategoryId: string | null = null;
+      if (categoryId && categoryId.trim() !== '') {
+        const cat = await this.prisma.category.findFirst({
+          where: { OR: [{ id: categoryId }, { name: categoryId }, { slug: categoryId }] },
+        });
+        if (cat) finalCategoryId = cat.id;
+      }
+
+      let finalCollectionId: string | null = null;
+      if (collectionId && collectionId.trim() !== '') {
+        const col = await this.prisma.collection.findFirst({
+          where: { OR: [{ id: collectionId }, { name: collectionId }, { slug: collectionId }] },
+        });
+        if (col) finalCollectionId = col.id;
+      }
+
+      let finalStatus: ProductStatus = ProductStatus.PUBLISHED;
+      if ((status as any) === 'Active' || status === ProductStatus.PUBLISHED) {
+        finalStatus = ProductStatus.PUBLISHED;
+      } else if ((status as any) === 'Draft' || status === ProductStatus.DRAFT) {
+        finalStatus = ProductStatus.DRAFT;
+      } else if ((status as any) === 'Archived' || status === ProductStatus.ARCHIVED) {
+        finalStatus = ProductStatus.ARCHIVED;
+      } else if (status) {
+        finalStatus = status;
+      }
+
+      const publishedAt = finalStatus === ProductStatus.PUBLISHED ? new Date() : null;
+
+      let rawSlug = dto.slug || dto.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      if (!rawSlug || rawSlug.trim() === '') {
+        rawSlug = (dto.name || 'product').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      }
+
+      let slug = rawSlug;
+      const existingSlug = await this.prisma.product.findUnique({ where: { slug } });
+      if (existingSlug) {
+        slug = `${rawSlug}-${Date.now().toString().slice(-4)}`;
+      }
+
+      let rawSku = dto.sku || `HK-${slug.substring(0, 5).toUpperCase()}-${Date.now().toString().slice(-4)}`;
+      let sku = rawSku;
+      const existingSku = await this.prisma.product.findUnique({ where: { sku } });
+      if (existingSku) {
+        sku = `${rawSku}-${Math.floor(Math.random() * 1000)}`;
+      }
+
+      const validImages = Array.isArray(images)
+        ? images.filter((url): url is string => typeof url === 'string' && url.trim().length > 0)
+        : [];
+
+      const description = dto.description || (dto as any).shortDescription || 'No description provided.';
+      const price = Number(dto.price || 0);
+      const salePrice = dto.salePrice ? Number(dto.salePrice) : null;
+      const stock = Number(dto.stock || 0);
+      const isFeatured = Boolean(dto.isFeatured);
+
+      return await this.prisma.product.create({
+        data: {
+          name: dto.name,
+          slug,
+          description,
+          sku,
+          price,
+          salePrice,
+          stock,
+          isFeatured,
+          status: finalStatus,
+          publishedAt,
+          categoryId: finalCategoryId,
+          collectionId: finalCollectionId,
+          images: validImages.length > 0
+            ? {
+                create: validImages.map((url, idx) => ({
+                  url,
+                  isPrimary: idx === 0,
+                  sortOrder: idx,
+                })),
+              }
+            : undefined,
+          variants: variants && variants.length > 0
+            ? {
+                create: variants,
+              }
+            : undefined,
+        },
+        include: {
+          category: true,
+          collection: true,
+          images: true,
+          variants: true,
+        },
       });
-      if (cat) finalCategoryId = cat.id;
+    } catch (err: any) {
+      if (err.code === 'P2002') {
+        const target = err.meta?.target ? (Array.isArray(err.meta.target) ? err.meta.target.join(', ') : err.meta.target) : 'field';
+        throw new BadRequestException(`A product with this ${target} already exists.`);
+      }
+      console.error('Error creating product in DB:', err);
+      throw new BadRequestException(err.message || 'Failed to create product in database.');
     }
-
-    const finalStatus = status || ProductStatus.PUBLISHED;
-    const publishedAt = finalStatus === ProductStatus.PUBLISHED ? new Date() : null;
-    
-    // Auto-generate SKU if not provided
-    const sku = productData.sku || `HK-${productData.slug.substring(0, 5).toUpperCase()}-${Date.now().toString().slice(-4)}`;
-
-    return await this.prisma.product.create({
-      data: {
-        ...productData,
-        sku,
-        status: finalStatus,
-        publishedAt,
-        categoryId: finalCategoryId,
-        images: images
-          ? {
-              create: images.map((url, idx) => ({
-                url,
-                isPrimary: idx === 0,
-                sortOrder: idx,
-              })),
-            }
-          : undefined,
-        variants: variants
-          ? {
-              create: variants,
-            }
-          : undefined,
-      },
-      include: {
-        category: true,
-        images: true,
-        variants: true,
-      },
-    });
   }
 
   async update(id: string, dto: Partial<CreateProductDto>) {
-    const existing = await this.prisma.product.findUnique({ where: { id } });
-    if (!existing) {
-      throw new NotFoundException(`Product "${id}" not found`);
-    }
+    try {
+      const existing = await this.prisma.product.findUnique({ where: { id } });
+      if (!existing) {
+        throw new NotFoundException(`Product "${id}" not found`);
+      }
 
-    const { images, variants, categoryId, status, ...productData } = dto;
+      const { images, variants, categoryId, collectionId, status, ...rest } = dto as any;
 
-    let finalCategoryId = categoryId;
-    if (categoryId) {
-      const cat = await this.prisma.category.findFirst({
-        where: { OR: [{ id: categoryId }, { name: categoryId }, { slug: categoryId }] },
+      let finalCategoryId: string | null | undefined = undefined;
+      if (categoryId !== undefined) {
+        if (categoryId && categoryId.trim() !== '') {
+          const cat = await this.prisma.category.findFirst({
+            where: { OR: [{ id: categoryId }, { name: categoryId }, { slug: categoryId }] },
+          });
+          finalCategoryId = cat ? cat.id : null;
+        } else {
+          finalCategoryId = null;
+        }
+      }
+
+      let finalCollectionId: string | null | undefined = undefined;
+      if (collectionId !== undefined) {
+        if (collectionId && collectionId.trim() !== '') {
+          const col = await this.prisma.collection.findFirst({
+            where: { OR: [{ id: collectionId }, { name: collectionId }, { slug: collectionId }] },
+          });
+          finalCollectionId = col ? col.id : null;
+        } else {
+          finalCollectionId = null;
+        }
+      }
+
+      const updateData: any = {};
+      if (rest.name !== undefined) updateData.name = rest.name;
+      if (rest.slug !== undefined) updateData.slug = rest.slug;
+      if (rest.description !== undefined) updateData.description = rest.description || 'No description provided.';
+      if (rest.sku !== undefined) updateData.sku = rest.sku;
+      if (rest.price !== undefined) updateData.price = Number(rest.price);
+      if (rest.salePrice !== undefined) updateData.salePrice = rest.salePrice ? Number(rest.salePrice) : null;
+      if (rest.stock !== undefined) updateData.stock = Number(rest.stock);
+      if (rest.isFeatured !== undefined) updateData.isFeatured = Boolean(rest.isFeatured);
+      if (finalCategoryId !== undefined) updateData.categoryId = finalCategoryId;
+      if (finalCollectionId !== undefined) updateData.collectionId = finalCollectionId;
+
+      if (status) {
+        let finalStatus: ProductStatus = ProductStatus.DRAFT;
+        if (status === 'Active' || status === ProductStatus.PUBLISHED) {
+          finalStatus = ProductStatus.PUBLISHED;
+        } else if (status === 'Archived' || status === ProductStatus.ARCHIVED) {
+          finalStatus = ProductStatus.ARCHIVED;
+        } else {
+          finalStatus = status;
+        }
+
+        updateData.status = finalStatus;
+        if (finalStatus === ProductStatus.PUBLISHED && !existing.publishedAt) {
+          updateData.publishedAt = new Date();
+        }
+        if (finalStatus === ProductStatus.ARCHIVED) {
+          updateData.isArchived = true;
+        }
+      }
+
+      if (images) {
+        const validImages = Array.isArray(images)
+          ? images.filter((url): url is string => typeof url === 'string' && url.trim().length > 0)
+          : [];
+        await this.prisma.productImage.deleteMany({ where: { productId: id } });
+        updateData.images = {
+          create: validImages.map((url, idx) => ({
+            url,
+            isPrimary: idx === 0,
+            sortOrder: idx,
+          })),
+        };
+      }
+
+      return await this.prisma.product.update({
+        where: { id },
+        data: updateData,
+        include: { category: true, collection: true, images: true, variants: true },
       });
-      if (cat) finalCategoryId = cat.id;
-    }
-
-    const updateData: any = { ...productData };
-    if (finalCategoryId !== undefined) updateData.categoryId = finalCategoryId;
-
-    if (status) {
-      updateData.status = status;
-      if (status === ProductStatus.PUBLISHED && !existing.publishedAt) {
-        updateData.publishedAt = new Date();
+    } catch (err: any) {
+      if (err instanceof NotFoundException) throw err;
+      if (err.code === 'P2002') {
+        const target = err.meta?.target ? (Array.isArray(err.meta.target) ? err.meta.target.join(', ') : err.meta.target) : 'field';
+        throw new BadRequestException(`Product update failed: duplicate ${target}.`);
       }
-      if (status === ProductStatus.ARCHIVED) {
-        updateData.isArchived = true;
-      }
+      console.error('Error updating product in DB:', err);
+      throw new BadRequestException(err.message || 'Failed to update product.');
     }
-
-    if (images && images.length > 0) {
-      // Re-create product images
-      await this.prisma.productImage.deleteMany({ where: { productId: id } });
-      updateData.images = {
-        create: images.map((url, idx) => ({
-          url,
-          isPrimary: idx === 0,
-          sortOrder: idx,
-        })),
-      };
-    }
-
-    return await this.prisma.product.update({
-      where: { id },
-      data: updateData,
-      include: { category: true, images: true, variants: true },
-    });
   }
 
   async remove(id: string) {

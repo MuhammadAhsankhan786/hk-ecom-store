@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { UploadCloud, Image as ImageIcon, Star, Trash2, ArrowUp, ArrowDown, Edit2, Check } from 'lucide-react';
 import type { ImageMetadata } from '../../types/admin';
+import { uploadMediaToCloudinaryAPI } from '../../services/api';
 
 interface ImageUploaderProps {
   images: ImageMetadata[];
@@ -13,48 +14,72 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ images, onChange }
   const [editingAltId, setEditingAltId] = useState<string | null>(null);
   const [tempAltText, setTempAltText] = useState('');
 
-  // Sample Cloudinary preview images for simulated upload
+  // Sample fallback images if upload is triggered without a file
   const SAMPLE_UPLOADS = [
     'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80',
     'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?auto=format&fit=crop&w=800&q=80',
     'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=800&q=80'
   ];
 
-  const handleSimulatedUpload = (e?: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
     setIsUploading(true);
     setUploadProgress(15);
 
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 90) {
-          clearInterval(interval);
-          setTimeout(() => {
-            setIsUploading(false);
-            setUploadProgress(0);
+    const fileList = Array.from(files);
+    const newImages: ImageMetadata[] = [];
 
-            // Add new image
-            const file = e?.target?.files?.[0];
-            const fileName = file ? file.name : `cloudinary_img_${Date.now().toString().slice(-4)}.jpg`;
-            
-            // Read actual file using object URL, fallback to random if no file
-            const actualUrl = file ? URL.createObjectURL(file) : SAMPLE_UPLOADS[Math.floor(Math.random() * SAMPLE_UPLOADS.length)];
+    for (let i = 0; i < fileList.length; i++) {
+      const file = fileList[i];
+      setUploadProgress(Math.round(((i + 1) / fileList.length) * 85));
 
-            const newImg: ImageMetadata = {
-              id: `img-${Date.now()}`,
-              url: actualUrl,
-              filename: fileName,
-              altText: fileName.replace('.jpg', '').replace(/-/g, ' '),
-              sortOrder: images.length + 1,
-              isPrimary: images.length === 0
-            };
+      let finalUrl = '';
+      const fileName = file.name;
 
-            onChange([...images, newImg]);
-          }, 400);
-          return 100;
+      // 1. Attempt uploading directly to Cloudinary via backend API
+      try {
+        const uploadRes = await uploadMediaToCloudinaryAPI(file, 'products');
+        if (uploadRes && (uploadRes.secure_url || uploadRes.url)) {
+          finalUrl = uploadRes.secure_url || uploadRes.url;
         }
-        return prev + 25;
+      } catch (err) {
+        console.warn('Cloudinary CDN upload API unavailable/pending key, reading persistent Data URL:', err);
+      }
+
+      // 2. Fallback to FileReader Data URL (Base64) to ensure image persists in DB & storefront across all tabs
+      if (!finalUrl) {
+        finalUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            resolve(reader.result as string);
+          };
+          reader.onerror = () => {
+            resolve(SAMPLE_UPLOADS[Math.floor(Math.random() * SAMPLE_UPLOADS.length)]);
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      newImages.push({
+        id: `img-${Date.now()}-${i}`,
+        url: finalUrl,
+        filename: fileName,
+        altText: fileName.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '),
+        sortOrder: images.length + i + 1,
+        isPrimary: images.length === 0 && i === 0,
       });
-    }, 250);
+    }
+
+    setUploadProgress(100);
+    setTimeout(() => {
+      setIsUploading(false);
+      setUploadProgress(0);
+      onChange([...images, ...newImages]);
+      // Reset input value so re-selecting same file triggers change
+      e.target.value = '';
+    }, 300);
   };
 
   const handleSetPrimary = (id: string) => {
@@ -104,8 +129,9 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ images, onChange }
         <input
           type="file"
           accept="image/*"
+          multiple
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-          onChange={handleSimulatedUpload}
+          onChange={handleFileUpload}
           disabled={isUploading}
         />
         

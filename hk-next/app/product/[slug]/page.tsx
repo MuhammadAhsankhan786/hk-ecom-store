@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, use } from 'react'
+import { useState, use, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { products } from '../../../src/data/products'
+import { products, type Product } from '../../../src/data/products'
 import { useStore } from '../../../src/store'
 import ProductCard from '../../../src/components/ProductCard'
 
@@ -31,11 +31,48 @@ export default function ProductDetail({ params }: { params: Promise<{ slug: stri
   const router = useRouter()
   const { addToCart, toggleWishlist, isInWishlist } = useStore()
 
-  const product = products.find(p => p.slug === slug)
+  const [product, setProduct] = useState<Product | null>(() => {
+    return products.find(p => p.slug === slug) || null
+  })
+
+  useEffect(() => {
+    async function loadLiveProduct() {
+      try {
+        const res = await fetch(`http://localhost:5000/products/${slug}`)
+        if (res.ok) {
+          const p = await res.json()
+          setProduct({
+            id: p.id,
+            name: p.name,
+            slug: p.slug,
+            category: p.category?.name || 'Bedsheets',
+            price: p.price,
+            oldPrice: p.salePrice || undefined,
+            rating: 5.0,
+            reviews: p.reviews?.length || 12,
+            image: p.images && p.images.length > 0 ? p.images[0].url : 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=600&h=600&fit=crop&auto=format',
+            images: p.images && p.images.length > 0 ? p.images.map((img: any) => img.url) : ['https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=600&h=600&fit=crop&auto=format'],
+            badge: p.isFeatured ? 'new' : undefined,
+            publishedAt: p.publishedAt,
+            status: p.status,
+            inStock: p.stock > 0,
+            material: p.description || '100% Cotton Satin',
+            sizes: p.variants?.map((v: any) => v.size) || ['King', 'Queen'],
+            colors: p.variants?.map((v: any) => v.color) || ['Gold', 'Maroon'],
+            description: p.description,
+            sku: p.sku,
+          })
+        }
+      } catch (err) {
+        console.warn('Could not fetch live product detail:', err)
+      }
+    }
+    loadLiveProduct()
+  }, [slug])
 
   const [activeImage, setActiveImage] = useState(0)
-  const [selectedSize, setSelectedSize] = useState(product?.sizes[0] || '')
-  const [selectedColor, setSelectedColor] = useState(product?.colors[0] || '')
+  const [selectedSize, setSelectedSize] = useState(product?.sizes[0] || 'King')
+  const [selectedColor, setSelectedColor] = useState(product?.colors[0] || 'Gold')
   const [qty, setQty] = useState(1)
   const [activeTab, setActiveTab] = useState('description')
 

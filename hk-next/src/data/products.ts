@@ -9,7 +9,7 @@ export interface Product {
   reviews: number
   image: string
   images: string[]
-  badge?: 'sale' | 'new' | 'limited'
+  badge?: 'sale' | 'new' | 'limited' | 'NEW ARRIVAL' | string
   publishedAt?: string
   status?: string
   inStock: boolean
