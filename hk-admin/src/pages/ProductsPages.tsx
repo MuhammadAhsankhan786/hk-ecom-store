@@ -193,7 +193,6 @@ export const ProductFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = false
 
   const [name, setName] = useState(existing?.name || '');
   const [slug, setSlug] = useState(existing?.slug || '');
-  const [sku, setSku] = useState(existing?.sku || `HK-BED-00${products.length + 1}`);
   // Use categoryId (UUID) as the key sent to backend
   const [categoryId, setCategoryId] = useState(
     (existing as any)?.categoryId || categories[0]?.id || ''
@@ -218,7 +217,7 @@ export const ProductFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = false
     // Resolve human-readable category name for display
     const selectedCategory = categories.find(c => c.id === categoryId);
 
-    const payload = {
+    const payload: any = {
       name,
       slug: slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       sku: existing?.sku || `HK-${name.substring(0, 5).toUpperCase()}-${Date.now().toString().slice(-4)}`,
@@ -240,7 +239,7 @@ export const ProductFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = false
       fabric,
       shortDescription,
       description,
-      images: images.map(img => img.url)
+      images,
     };
 
     try {
