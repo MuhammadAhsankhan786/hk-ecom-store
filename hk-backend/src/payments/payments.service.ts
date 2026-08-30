@@ -25,6 +25,7 @@ export class PaymentsService {
 
       const transactionRef = `TXN-${order.orderNumber}-${Date.now().toString().slice(-4)}`;
 
+      const storefrontUrl = this.configService.get<string>('STOREFRONT_URL') || 'https://hk-ecom-store.vercel.app';
       return {
         message: 'Payment session initiated',
         gateway,
@@ -33,8 +34,8 @@ export class PaymentsService {
           merchant_id: merchantId,
           amount: order.totalAmount,
           item_name: `HK Fabric Order ${order.orderNumber}`,
-          return_url: `http://localhost:3000/order-confirmation?orderNumber=${order.orderNumber}`,
-          cancel_url: `http://localhost:3000/checkout`,
+          return_url: `${storefrontUrl}/order-confirmation?orderNumber=${order.orderNumber}`,
+          cancel_url: `${storefrontUrl}/checkout`,
           custom_str1: order.id,
           transaction_ref: transactionRef,
         },

@@ -13,7 +13,7 @@ export const createExpressServer = async (expressInstance: express.Express) => {
   );
 
   app.enableCors({
-    origin: '*',
+    origin: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });

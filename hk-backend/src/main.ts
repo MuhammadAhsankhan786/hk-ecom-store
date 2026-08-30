@@ -18,7 +18,7 @@ async function bootstrap() {
 
   // Enable CORS for Next.js storefront and Vite Admin panel
   app.enableCors({
-    origin: '*',
+    origin: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });

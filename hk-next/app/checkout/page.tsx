@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useStore } from '../../src/store'
+import { getApiBaseUrl } from '../../src/services/api'
 
 type Step = 1 | 2 | 3 | 4
 
@@ -70,7 +71,7 @@ export default function Checkout() {
 
     try {
       // Simulate API call to NestJS backend POST /orders with atomic stock check & idempotency
-      const response = await fetch('http://localhost:5000/orders', {
+      const response = await fetch(`${getApiBaseUrl()}/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

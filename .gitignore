@@ -43,3 +43,4 @@ skills-lock.json
 # Agent state
 /.plugins/
 /.opencode-skills/
+scratch/

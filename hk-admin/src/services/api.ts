@@ -6,29 +6,31 @@
 import { toast } from 'react-hot-toast';
 
 function getApiBaseUrl(): string {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
-  }
+  const envUrl = import.meta.env.VITE_API_URL;
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
     if (host !== 'localhost' && host !== '127.0.0.1') {
+      if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+        return envUrl;
+      }
       return 'https://hk-backend-bice.vercel.app';
     }
   }
-  return 'http://localhost:5000';
+  return envUrl || 'http://localhost:5000';
 }
 
 function getStorefrontUrl(): string {
-  if (import.meta.env.VITE_STOREFRONT_URL) {
-    return import.meta.env.VITE_STOREFRONT_URL;
-  }
+  const envUrl = import.meta.env.VITE_STOREFRONT_URL;
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
     if (host !== 'localhost' && host !== '127.0.0.1') {
+      if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+        return envUrl;
+      }
       return 'https://hk-ecom-store.vercel.app';
     }
   }
-  return 'http://localhost:3000';
+  return envUrl || 'http://localhost:3000';
 }
 
 function getAuthHeader(): Record<string, string> {

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { products, type Product } from '../../../src/data/products'
 import { useStore } from '../../../src/store'
 import ProductCard from '../../../src/components/ProductCard'
+import { getApiBaseUrl } from '../../../src/services/api'
 
 function Stars({ rating, large }: { rating: number; large?: boolean }) {
   const size = large ? 16 : 12
@@ -38,7 +39,7 @@ export default function ProductDetail({ params }: { params: Promise<{ slug: stri
   useEffect(() => {
     async function loadLiveProduct() {
       try {
-        const res = await fetch(`http://localhost:5000/products/${slug}`)
+        const res = await fetch(`${getApiBaseUrl()}/products/${slug}`)
         if (res.ok) {
           const p = await res.json()
           setProduct({
