@@ -33,7 +33,7 @@ export const ProductsListPage: React.FC = () => {
       render: (p) => (
         <div className="flex items-center gap-3">
           <img
-            src={p.images[0]?.url || 'https://via.placeholder.com/60'}
+            src={p.images && p.images[0]?.url ? p.images[0].url : 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"><rect width="60" height="60" fill="%23F8F7F3"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="9" fill="%236B6B6B">No Image</text></svg>'}
             alt={p.name}
             className="w-12 h-12 rounded-lg object-cover border border-[#E8E5DE]"
           />
