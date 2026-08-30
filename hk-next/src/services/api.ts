@@ -20,7 +20,7 @@ export function getApiBaseUrl(): string {
     }
     return 'https://hk-backend-bice.vercel.app';
   }
-  return envUrl || 'http://localhost:5000';
+  return envUrl || 'https://hk-backend-bice.vercel.app';
 }
 
 export async function fetchProductsFromAPI(params?: { category?: string; search?: string; page?: number; limit?: number }) {

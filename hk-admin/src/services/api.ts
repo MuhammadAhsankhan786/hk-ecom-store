@@ -16,7 +16,7 @@ function getApiBaseUrl(): string {
       return 'https://hk-backend-bice.vercel.app';
     }
   }
-  return envUrl || 'http://localhost:5000';
+  return envUrl || 'https://hk-backend-bice.vercel.app';
 }
 
 function getStorefrontUrl(): string {
