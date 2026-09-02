@@ -256,17 +256,17 @@ export const ProductFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = false
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={() => setCurrentTab('products')} icon={<ArrowLeft className="w-4 h-4" />}>
             Back
           </Button>
-          <h2 className="text-xl font-bold text-[#111111]">
+          <h2 className="text-base sm:text-xl font-bold text-[#111111] truncate">
             {isEdit ? `Edit Product: ${existing?.sku}` : 'Create New Product'}
           </h2>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
           <Button variant="secondary" onClick={() => setCurrentTab('products')}>
             Cancel
           </Button>

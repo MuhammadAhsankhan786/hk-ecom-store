@@ -51,7 +51,7 @@ export const CollectionFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = fa
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setCurrentTab('collections')}
@@ -60,14 +60,14 @@ export const CollectionFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = fa
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
-            <h1 className="text-xl font-bold text-[#111111]">
+            <h1 className="text-lg sm:text-xl font-bold text-[#111111]">
               {isEdit ? 'Edit Collection' : 'Create Special Collection'}
             </h1>
             <p className="text-xs text-[#6B6B6B]">Featured seasonal collections (e.g. Wedding, Summer, Best Sellers)</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
           <Button variant="secondary" size="sm" onClick={() => setCurrentTab('collections')}>
             Cancel
           </Button>

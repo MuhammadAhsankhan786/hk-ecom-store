@@ -198,7 +198,7 @@ export function DataTable<T extends { id: string }>({
 
       {/* Pagination Footer */}
       {!isLoading && sortedData.length > 0 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-[#E8E5DE] bg-[#F8F7F3] text-xs text-[#6B6B6B]">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-[#E8E5DE] bg-[#F8F7F3] text-xs text-[#6B6B6B] text-center sm:text-left">
           <div>
             Showing <span className="font-semibold text-[#111111]">{(currentPage - 1) * itemsPerPage + 1}</span> to{' '}
             <span className="font-semibold text-[#111111]">
