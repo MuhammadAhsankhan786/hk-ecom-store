@@ -451,7 +451,7 @@ export const DashboardPage: React.FC = () => {
               {products.slice(0, 4).map(prod => (
                 <div key={prod.id} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-[#F8F7F3] transition-colors border border-transparent hover:border-[#E8E5DE]">
                   <img
-                    src={prod.images[0]?.url}
+                    src={prod.images[0]?.url || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format'}
                     alt={prod.name}
                     className="w-12 h-12 rounded-xl object-cover border border-[#E8E5DE]"
                   />

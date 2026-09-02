@@ -80,7 +80,7 @@ export const StockAdjustmentFormPage: React.FC = () => {
               {selectedProduct && (
                 <div className="p-4 bg-[#F8F7F3] rounded-xl border border-[#E8E5DE] flex items-center gap-4">
                   <img
-                    src={selectedProduct.images[0]?.url}
+                    src={selectedProduct.images[0]?.url || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format'}
                     alt={selectedProduct.name}
                     className="w-16 h-16 rounded-xl object-cover border border-[#E8E5DE]"
                   />

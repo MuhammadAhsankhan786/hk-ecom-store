@@ -6,7 +6,7 @@ import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import ProductCard from '../src/components/ProductCard'
 import { products, type Product } from '../src/data/products'
-import { fetchProductsFromAPI } from '../src/services/api'
+import { fetchProductsFromAPI, fetchCategoriesFromAPI, fetchCollectionsFromAPI } from '../src/services/api'
 
 const heroSlides = [
   {
@@ -202,14 +202,21 @@ export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
   const [liveProducts, setLiveProducts] = useState<Product[]>(products)
+  const [liveCategories, setLiveCategories] = useState(categories)
+  const [liveCollections, setLiveCollections] = useState(collections)
 
-  // Fetch live products from NestJS REST API and sync in real-time without page refresh
+  // Fetch live products, categories & collections from NestJS REST API and sync in real-time without page refresh
   useEffect(() => {
     let isMounted = true
 
-    async function loadAPIProducts() {
+    async function loadAPIData() {
       try {
-        const res = await fetchProductsFromAPI()
+        const [res, catRes, colRes] = await Promise.all([
+          fetchProductsFromAPI(),
+          fetchCategoriesFromAPI(),
+          fetchCollectionsFromAPI(),
+        ])
+
         if (res && res.data && res.data.length > 0 && isMounted) {
           const mapped: Product[] = res.data.map((p: any) => ({
             id: p.id,
@@ -245,18 +252,35 @@ export default function Home() {
           const nonDuplicateFallback = products.filter(fp => !existingIds.has(fp.id))
           setLiveProducts([...mapped, ...nonDuplicateFallback])
         }
+
+        if (catRes && Array.isArray(catRes) && catRes.length > 0 && isMounted) {
+          setLiveCategories(catRes.map((c: any) => ({
+            name: c.name,
+            desc: c.description || 'Pure cotton, satin & digital prints',
+            image: c.image || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=800&h=1000&fit=crop&q=100&auto=format',
+            to: `/shop?category=${encodeURIComponent(c.name)}`,
+          })))
+        }
+
+        if (colRes && Array.isArray(colRes) && colRes.length > 0 && isMounted) {
+          setLiveCollections(colRes.map((c: any) => ({
+            name: c.name,
+            tag: c.description || 'Curated Special Collection',
+            image: c.image || 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=1200&h=800&fit=crop&q=100&auto=format',
+          })))
+        }
       } catch (err) {
         console.warn('Backend API connection pending or offline, fallback to store state:', err)
       }
     }
 
-    loadAPIProducts()
+    loadAPIData()
 
     // 1. Fast auto-polling every 1.5 seconds for instant zero-refresh updates
-    const intervalId = setInterval(loadAPIProducts, 1500)
+    const intervalId = setInterval(loadAPIData, 1500)
 
     // 2. Window focus refetching
-    const handleFocus = () => loadAPIProducts()
+    const handleFocus = () => loadAPIData()
     window.addEventListener('focus', handleFocus)
 
     return () => {
@@ -526,7 +550,7 @@ export default function Home() {
             </Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 lg:gap-4">
-            {categories.map(cat => (
+            {liveCategories.map(cat => (
               <div key={cat.name} className="gsap-category-card">
                 <Link href={cat.to} className="group relative overflow-hidden bg-[#F8F7F3] aspect-[3/4] rounded-xl shadow-xs hover:shadow-md transition-shadow block">
                   <img
@@ -641,7 +665,7 @@ export default function Home() {
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-500 text-[#111111]">Featured Collections</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-            {collections.map(col => (
+            {liveCollections.map(col => (
               <div key={col.name} className="gsap-collection-card">
                 <Link href="/shop" className="group relative overflow-hidden bg-[#E8E5DE] aspect-video md:aspect-[4/3] rounded-xl shadow-xs block">
                   <img

@@ -176,7 +176,7 @@ export const OrderDetailsPage: React.FC = () => {
               {order.items.map((item, i) => (
                 <div key={i} className="py-3 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <img src={item.image} alt={item.productName} className="w-12 h-12 rounded-lg object-cover border border-[#E8E5DE]" />
+                    <img src={item.image || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format'} alt={item.productName} className="w-12 h-12 rounded-lg object-cover border border-[#E8E5DE]" />
                     <div>
                       <p className="font-bold text-xs text-[#111111]">{item.productName}</p>
                       <p className="text-[10px] text-[#6B6B6B]">Variant: {item.variant} | SKU: {item.sku}</p>

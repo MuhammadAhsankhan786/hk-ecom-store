@@ -165,6 +165,36 @@ export async function deleteCategoryAPI(id: string) {
   });
 }
 
+// ─── COLLECTIONS ─────────────────────────────────────────────────────────────
+
+export async function fetchCollectionsAPI() {
+  try {
+    return await apiRequest('/collections');
+  } catch {
+    return null;
+  }
+}
+
+export async function createCollectionAPI(payload: Record<string, any>) {
+  return apiRequest('/collections', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateCollectionAPI(id: string, payload: Record<string, any>) {
+  return apiRequest(`/collections/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteCollectionAPI(id: string) {
+  return apiRequest(`/collections/${id}`, {
+    method: 'DELETE',
+  });
+}
+
 // ─── ORDERS ──────────────────────────────────────────────────────────────────
 
 export async function fetchAdminOrdersAPI() {

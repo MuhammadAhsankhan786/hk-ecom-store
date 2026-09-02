@@ -52,7 +52,7 @@ export default function Cart() {
             {cart.map(item => (
               <div key={`${item.id}-${item.selectedSize}-${item.selectedColor}`} className="bg-white p-4 sm:p-5 flex gap-4 sm:gap-5">
                 <Link href={`/product/${item.slug}`} className="shrink-0 w-24 h-24 sm:w-28 sm:h-28 bg-[#F8F7F3] overflow-hidden">
-                  <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                  <img src={item.image || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format'} alt={item.name} className="w-full h-full object-cover" />
                 </Link>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">

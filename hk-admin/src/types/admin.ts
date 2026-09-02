@@ -61,13 +61,15 @@ export interface Category {
 export interface Collection {
   id: string;
   name: string;
+  slug?: string;
   description: string;
   image: string;
   productsCount: number;
-  sortOrder: number;
-  status: 'Active' | 'Inactive';
-  seoTitle: string;
-  seoDescription: string;
+  isFeatured?: boolean;
+  sortOrder?: number;
+  status?: 'Active' | 'Inactive';
+  seoTitle?: string;
+  seoDescription?: string;
 }
 
 export interface InventoryAdjustment {

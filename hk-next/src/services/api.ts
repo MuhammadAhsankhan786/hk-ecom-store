@@ -49,7 +49,17 @@ export async function fetchProductsFromAPI(params?: { category?: string; search?
 
 export async function fetchCategoriesFromAPI() {
   try {
-    const res = await fetch(`${getApiBaseUrl()}/products/categories`, { cache: 'no-store' });
+    const res = await fetch(`${getApiBaseUrl()}/categories`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    return null;
+  }
+}
+
+export async function fetchCollectionsFromAPI() {
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/collections`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (err) {

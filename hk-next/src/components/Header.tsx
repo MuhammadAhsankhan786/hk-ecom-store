@@ -132,7 +132,7 @@ export default function Header() {
                         onClick={() => setIsFocused(false)}
                         className="flex items-center gap-3 p-2.5 hover:bg-[#F8F7F3] transition-colors group"
                       >
-                        <img src={p.images[0]} alt={p.name} className="w-10 h-10 object-cover rounded shrink-0" />
+                        <img src={p.images[0] || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format'} alt={p.name} className="w-10 h-10 object-cover rounded shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium text-[#111111] truncate group-hover:text-[#D4AF37] transition-colors">{p.name}</p>
                           <p className="text-[10px] text-[#6B6B6B]">{p.category} • PKR {p.price.toLocaleString()}</p>

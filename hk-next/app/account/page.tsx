@@ -126,7 +126,7 @@ export default function Account() {
                   <div className="space-y-3">
                     {sampleOrders.slice(0, 3).map(order => (
                       <div key={order.id} className="flex items-center gap-3 py-3 border-b border-[#E8E5DE] last:border-0">
-                        <img src={order.image} alt="" className="w-10 h-10 object-cover bg-[#F8F7F3]" />
+                        <img src={order.image || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format'} alt="" className="w-10 h-10 object-cover bg-[#F8F7F3]" />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-semibold text-[#111111]">#{order.id}</p>
                           <p className="text-[10px] text-[#6B6B6B] truncate">{order.name}</p>
@@ -154,7 +154,7 @@ export default function Account() {
                         <span className={`text-[9px] uppercase tracking-widest font-semibold px-2.5 py-1 border ${STATUS_STYLES[order.status]}`}>{order.status}</span>
                       </div>
                       <div className="flex items-center gap-3 mb-4">
-                        <img src={order.image} alt="" className="w-14 h-14 object-cover bg-[#F8F7F3]" />
+                        <img src={order.image || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format'} alt="" className="w-14 h-14 object-cover bg-[#F8F7F3]" />
                         <div>
                           <p className="text-sm text-[#111111]">{order.name}</p>
                           <p className="text-sm font-semibold text-[#111111] mt-1">Rs. {order.total.toLocaleString()}</p>
@@ -218,7 +218,7 @@ export default function Account() {
                 <div className="bg-white p-6 mb-4">
                   <p className="text-[10px] uppercase tracking-widest font-semibold text-[#111111] mb-4">Items</p>
                   <div className="flex gap-4">
-                    <img src={selectedOrder.image} alt="" className="w-16 h-16 object-cover bg-[#F8F7F3]" />
+                    <img src={selectedOrder.image || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format'} alt="" className="w-16 h-16 object-cover bg-[#F8F7F3]" />
                     <div className="flex-1">
                       <p className="text-sm font-medium text-[#111111]">{selectedOrder.name}</p>
                       <p className="text-xs text-[#6B6B6B] mt-1">King · White · Qty: 1</p>
@@ -226,7 +226,6 @@ export default function Account() {
                     <span className="text-sm font-semibold text-[#111111]">Rs. {selectedOrder.total.toLocaleString()}</span>
                   </div>
                 </div>
-
                 {/* Summary */}
                 <div className="bg-white p-6">
                   <p className="text-[10px] uppercase tracking-widest font-semibold text-[#111111] mb-4">Payment Summary</p>
@@ -258,7 +257,7 @@ export default function Account() {
                       <div key={p.id} className="bg-white group">
                         <div className="relative overflow-hidden bg-[#F8F7F3] aspect-square">
                           <Link href={`/product/${p.slug}`}>
-                            <img src={p.image} alt={p.name} className="w-full h-full object-cover transition-transform duration-400 group-hover:scale-105" />
+                            <img src={p.image || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format'} alt={p.name} className="w-full h-full object-cover transition-transform duration-400 group-hover:scale-105" />
                           </Link>
                           <button
                             onClick={() => toggleWishlist(p)}

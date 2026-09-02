@@ -128,7 +128,7 @@ export default function ProductDetail({ params }: { params: Promise<{ slug: stri
                   onClick={() => setActiveImage(i)}
                   className={`shrink-0 w-16 h-16 sm:w-20 sm:h-20 border-2 overflow-hidden transition-colors ${activeImage === i ? 'border-[#D4AF37]' : 'border-[#E8E5DE] hover:border-[#111111]'}`}
                 >
-                  <img src={img.replace('800&h=800', '200&h=200')} alt="" className="w-full h-full object-cover" />
+                  <img src={img ? img.replace('800&h=800', '200&h=200') : 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=200&h=200&fit=crop&auto=format'} alt="" className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
@@ -136,7 +136,7 @@ export default function ProductDetail({ params }: { params: Promise<{ slug: stri
             {/* Main image */}
             <div className="flex-1 bg-[#F8F7F3] aspect-square overflow-hidden relative">
               <img
-                src={product.images[activeImage]}
+                src={product.images[activeImage] || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format'}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />

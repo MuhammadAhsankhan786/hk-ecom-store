@@ -187,7 +187,7 @@ export default function Checkout() {
                   {cart.map(item => (
                     <div key={`${item.id}-${item.selectedSize}-${item.selectedColor}`} className="flex gap-4 py-4 border-b border-[#E8E5DE]">
                       <div className="w-16 h-16 bg-[#F8F7F3] overflow-hidden shrink-0">
-                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                        <img src={item.image || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format'} alt={item.name} className="w-full h-full object-cover" />
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-medium text-[#111111] line-clamp-1">{item.name}</p>
@@ -317,7 +317,7 @@ export default function Checkout() {
               {cart.map(item => (
                 <div key={`${item.id}-${item.selectedSize}-${item.selectedColor}`} className="flex items-center gap-3">
                   <div className="relative w-12 h-12 bg-[#F8F7F3] shrink-0">
-                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                    <img src={item.image || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format'} alt={item.name} className="w-full h-full object-cover" />
                     <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#111111] text-white text-[9px] font-bold rounded-full flex items-center justify-center">{item.qty}</span>
                   </div>
                   <div className="flex-1 min-w-0">

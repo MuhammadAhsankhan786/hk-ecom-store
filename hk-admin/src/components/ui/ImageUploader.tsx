@@ -191,7 +191,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ images, onChange }
               >
                 {/* Thumbnail Image */}
                 <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-[#F8F7F3] border border-[#E8E5DE] shrink-0">
-                  <img src={img.url} alt={img.altText} className="w-full h-full object-cover" />
+                  <img src={img.url || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format'} alt={img.altText} className="w-full h-full object-cover" />
                   {img.isPrimary && (
                     <span className="absolute top-0 left-0 right-0 bg-[#D4AF37] text-black text-[9px] font-bold text-center py-0.5 uppercase tracking-wider">
                       Primary

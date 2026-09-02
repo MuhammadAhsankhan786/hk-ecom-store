@@ -36,7 +36,7 @@ export default function Wishlist() {
               <div key={p.id} className="bg-white group border border-[#E8E5DE]">
                 <div className="relative overflow-hidden bg-[#F8F7F3] aspect-square">
                   <Link href={`/product/${p.slug}`}>
-                    <img src={p.image} alt={p.name} className="w-full h-full object-cover transition-transform duration-400 group-hover:scale-105" />
+                    <img src={p.image || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format'} alt={p.name} className="w-full h-full object-cover transition-transform duration-400 group-hover:scale-105" />
                   </Link>
                   <button
                     onClick={() => toggleWishlist(p)}

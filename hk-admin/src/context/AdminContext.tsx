@@ -3,6 +3,7 @@ import {
   fetchAdminProductsAPI, fetchAdminOrdersAPI,
   createProductAPI, updateProductAPI, deleteProductAPI,
   fetchCategoriesAPI, createCategoryAPI, updateCategoryAPI, deleteCategoryAPI,
+  fetchCollectionsAPI, createCollectionAPI, updateCollectionAPI, deleteCollectionAPI,
   revalidateStorefront, loginAdminAPI
 } from '../services/api';
 import type {
@@ -205,14 +206,38 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, []);
 
+  const refreshCollections = useCallback(async () => {
+    try {
+      const colRes = await fetchCollectionsAPI();
+      if (colRes && Array.isArray(colRes) && colRes.length > 0) {
+        setCollections(colRes.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          slug: c.slug,
+          description: c.description || '',
+          image: c.image || '',
+          isFeatured: c.isFeatured ?? true,
+          productsCount: c._count?.products || 0,
+          status: 'Active',
+          sortOrder: 1,
+          seoTitle: `${c.name} | HK Fabric`,
+          seoDescription: c.description || '',
+        })));
+      }
+    } catch (err) {
+      console.warn('Could not refresh collections from backend:', err);
+    }
+  }, []);
+
   // Fetch live data from NestJS REST API on mount
   useEffect(() => {
     if (!isAuthenticated) return;
     
     async function loadLiveBackendData() {
-      // Products and categories are loaded via refreshProducts() / refreshCategories()
+      // Products, categories, collections are loaded via refresh functions
       await refreshProducts();
       await refreshCategories();
+      await refreshCollections();
 
       // Load live orders
       try {
@@ -339,9 +364,22 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         images: imageUrls,
       };
       const created = await createProductAPI(payload);
+      
+      // Instant Optimistic Local State Update
+      const createdProductItem: Product = {
+        ...newP,
+        id: created.id || `prod-${Date.now()}`,
+        name: created.name || newP.name,
+        sku: created.sku || newP.sku,
+        createdAt: new Date().toISOString().split('T')[0],
+        updatedAt: new Date().toISOString().split('T')[0],
+      };
+      setProducts(prev => [createdProductItem, ...prev.filter(p => p.id !== createdProductItem.id)]);
+
       addAuditLog('Created product via API', 'Product', created.sku || newP.sku, undefined, created.name || newP.name);
-      await refreshProducts();
-      await revalidateStorefront('products');
+      
+      refreshProducts();
+      revalidateStorefront('products');
       
       // Trigger instant real-time sync for storefront tabs/windows
       try {
@@ -354,12 +392,34 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       showToast(`✓ Product "${created.name}" saved to database successfully.`);
     } catch (err: any) {
       showToast(`✗ Failed to create product: ${err.message || 'Backend error'}`);
+      refreshProducts();
       throw err;
     }
   };
 
   const updateProduct = async (id: string, updates: Partial<Product>) => {
     try {
+      // Instant Optimistic Local State Update so UI reflects changes in 0ms!
+      setProducts(prev => prev.map(p => {
+        if (p.id === id) {
+          return {
+            ...p,
+            ...updates,
+            name: updates.name !== undefined ? updates.name : p.name,
+            slug: updates.slug !== undefined ? updates.slug : p.slug,
+            price: updates.price !== undefined ? Number(updates.price) : p.price,
+            salePrice: (updates as any).salePrice !== undefined ? ((updates as any).salePrice ? Number((updates as any).salePrice) : undefined) : p.salePrice,
+            stock: updates.stock !== undefined ? Number(updates.stock) : p.stock,
+            status: updates.status !== undefined ? updates.status : p.status,
+            isFeatured: updates.isFeatured !== undefined ? updates.isFeatured : p.isFeatured,
+            description: updates.description !== undefined ? updates.description : p.description,
+            shortDescription: updates.shortDescription !== undefined ? updates.shortDescription : p.shortDescription,
+            images: updates.images !== undefined ? updates.images : p.images,
+          };
+        }
+        return p;
+      }));
+
       const payload: Record<string, any> = {};
       if (updates.name !== undefined) payload.name = updates.name;
       if (updates.slug !== undefined) payload.slug = updates.slug;
@@ -377,11 +437,14 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           .map((img: any) => (typeof img === 'string' ? img : img?.url))
           .filter((url): url is string => Boolean(url && typeof url === 'string' && url.trim().length > 0));
       }
+
       await updateProductAPI(id, payload);
       const p = products.find(prod => prod.id === id);
       if (p) addAuditLog('Updated product via API', 'Product', p.sku);
-      await refreshProducts();
-      await revalidateStorefront('products');
+      
+      // Sync background state
+      refreshProducts();
+      revalidateStorefront('products');
 
       // Trigger instant real-time sync for storefront tabs/windows
       try {
@@ -394,17 +457,22 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       showToast('✓ Product updated in database successfully.');
     } catch (err: any) {
       showToast(`✗ Failed to update product: ${err.message || 'Backend error'}`);
+      refreshProducts();
       throw err;
     }
   };
 
   const deleteProduct = async (id: string) => {
     try {
+      // Instant Optimistic Local State Removal
+      setProducts(prev => prev.filter(p => p.id !== id));
+
       const p = products.find(prod => prod.id === id);
       await deleteProductAPI(id);
       if (p) addAuditLog('Archived product via API', 'Product', p.sku, p.name);
-      await refreshProducts();
-      await revalidateStorefront('products');
+      
+      refreshProducts();
+      revalidateStorefront('products');
 
       // Trigger instant real-time sync for storefront tabs/windows
       try {
@@ -417,11 +485,12 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       showToast('✓ Product archived in database successfully.');
     } catch (err: any) {
       showToast(`✗ Failed to archive product: ${err.message || 'Backend error'}`);
+      refreshProducts();
       throw err;
     }
   };
 
-  // ─── Category Handlers (Real API calls) ────────────────────────────────────
+  // ─── Category Handlers (Real API calls + Optimistic Updates) ───────────────
 
   const addCategory = async (cat: Omit<Category, 'id' | 'productsCount'>) => {
     try {
@@ -433,18 +502,35 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         status: cat.status === 'Active' ? 'PUBLISHED' : (cat.status === 'Archived' ? 'ARCHIVED' : 'PUBLISHED'),
       };
       const created = await createCategoryAPI(payload);
+      
+      // Instant Optimistic Local State Update
+      const newCategoryItem: Category = {
+        id: created.id || `cat-${Date.now()}`,
+        name: created.name || cat.name,
+        slug: created.slug || cat.slug,
+        description: created.description || cat.description || '',
+        image: created.image || cat.image || '',
+        status: cat.status,
+        productsCount: 0,
+      };
+      setCategories(prev => [newCategoryItem, ...prev.filter(c => c.id !== newCategoryItem.id)]);
+
       addAuditLog('Created new category via API', 'Category', created.name);
-      await refreshCategories();
-      await revalidateStorefront('categories');
+      refreshCategories();
+      revalidateStorefront('categories');
       showToast(`✓ Category "${created.name}" saved to database successfully.`);
     } catch (err: any) {
       showToast(`✗ Failed to create category: ${err.message || 'Backend error'}`);
+      refreshCategories();
       throw err;
     }
   };
 
   const updateCategory = async (id: string, updates: Partial<Category>) => {
     try {
+      // Instant Optimistic Local State Update
+      setCategories(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+
       const payload: Record<string, any> = {};
       if (updates.name !== undefined) payload.name = updates.name;
       if (updates.description !== undefined) payload.description = updates.description;
@@ -453,46 +539,90 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         payload.status = updates.status === 'Active' ? 'PUBLISHED' : (updates.status === 'Archived' ? 'ARCHIVED' : 'DRAFT');
       }
       await updateCategoryAPI(id, payload);
-      await refreshCategories();
-      await revalidateStorefront('categories');
+      refreshCategories();
+      revalidateStorefront('categories');
       showToast('✓ Category updated in database successfully.');
     } catch (err: any) {
       showToast(`✗ Failed to update category: ${err.message || 'Backend error'}`);
+      refreshCategories();
       throw err;
     }
   };
 
   const deleteCategory = async (id: string) => {
     try {
+      // Instant Optimistic Local State Removal
+      setCategories(prev => prev.filter(c => c.id !== id));
+
       await deleteCategoryAPI(id);
-      await refreshCategories();
-      await revalidateStorefront('categories');
+      refreshCategories();
+      revalidateStorefront('categories');
       showToast('✓ Category archived in database successfully.');
     } catch (err: any) {
       showToast(`✗ Failed to archive category: ${err.message || 'Backend error'}`);
+      refreshCategories();
       throw err;
     }
   };
 
-  const addCollection = (col: Omit<Collection, 'id' | 'productsCount'>) => {
-    const newCol: Collection = {
-      ...col,
-      id: `col-${Date.now()}`,
-      productsCount: 0
-    };
-    setCollections(prev => [...prev, newCol]);
-    addAuditLog('Created new collection', 'Collection', newCol.name);
-    showToast(`Collection "${newCol.name}" added successfully.`);
+  const addCollection = async (col: Omit<Collection, 'id' | 'productsCount'>) => {
+    try {
+      const created = await createCollectionAPI({
+        name: col.name,
+        slug: col.slug,
+        description: col.description,
+        image: col.image,
+        isFeatured: col.isFeatured,
+      });
+
+      const newColItem: Collection = {
+        id: created.id || `col-${Date.now()}`,
+        name: created.name || col.name,
+        slug: created.slug || col.slug,
+        description: created.description || col.description || '',
+        image: created.image || col.image || '',
+        isFeatured: col.isFeatured ?? true,
+        productsCount: 0,
+      };
+
+      setCollections(prev => [newColItem, ...prev.filter(c => c.id !== newColItem.id)]);
+      addAuditLog('Created new collection via API', 'Collection', created.name);
+      refreshCollections();
+      revalidateStorefront('collections');
+      showToast(`✓ Collection "${created.name}" saved to database successfully.`);
+    } catch (err: any) {
+      showToast(`✗ Failed to create collection: ${err.message || 'Backend error'}`);
+      refreshCollections();
+      throw err;
+    }
   };
 
-  const updateCollection = (id: string, updates: Partial<Collection>) => {
-    setCollections(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
-    showToast('Collection updated successfully.');
+  const updateCollection = async (id: string, updates: Partial<Collection>) => {
+    try {
+      setCollections(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+      await updateCollectionAPI(id, updates);
+      refreshCollections();
+      revalidateStorefront('collections');
+      showToast('✓ Collection updated in database successfully.');
+    } catch (err: any) {
+      showToast(`✗ Failed to update collection: ${err.message || 'Backend error'}`);
+      refreshCollections();
+      throw err;
+    }
   };
 
-  const deleteCollection = (id: string) => {
-    setCollections(prev => prev.filter(c => c.id !== id));
-    showToast('Collection deleted.');
+  const deleteCollection = async (id: string) => {
+    try {
+      setCollections(prev => prev.filter(c => c.id !== id));
+      await deleteCollectionAPI(id);
+      refreshCollections();
+      revalidateStorefront('collections');
+      showToast('✓ Collection deleted from database successfully.');
+    } catch (err: any) {
+      showToast(`✗ Failed to delete collection: ${err.message || 'Backend error'}`);
+      refreshCollections();
+      throw err;
+    }
   };
 
   const adjustStock = (productId: string, adjustment: number, type: InventoryAdjustment['type'], reason: string, notes?: string) => {

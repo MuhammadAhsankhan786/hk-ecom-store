@@ -544,7 +544,7 @@ export const ProductDetailsPage: React.FC = () => {
             <div className="grid grid-cols-3 gap-3">
               {product.images.map(img => (
                 <div key={img.id} className="relative rounded-lg overflow-hidden border border-[#E8E5DE] h-32 bg-[#F8F7F3]">
-                  <img src={img.url} alt={img.altText} className="w-full h-full object-cover" />
+                  <img src={img.url || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format'} alt={img.altText} className="w-full h-full object-cover" />
                   {img.isPrimary && (
                     <span className="absolute top-1 left-1 bg-[#D4AF37] text-black text-[9px] font-bold px-1.5 py-0.5 rounded-md">
                       Primary

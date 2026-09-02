@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useAdmin } from '../context/AdminContext';
 import Button from '../components/ui/Button';
-import { ArrowLeft, Save, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Save, Image as ImageIcon, Upload, Loader2 } from 'lucide-react';
+import { uploadMediaToCloudinaryAPI } from '../services/api';
 
 export const CollectionFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = false }) => {
   const { setCurrentTab, collections, addCollection, updateCollection, selectedEntityId } = useAdmin();
@@ -15,6 +16,23 @@ export const CollectionFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = fa
   const [sortOrder, setSortOrder] = useState(existingCollection?.sortOrder || 1);
   const [seoTitle, setSeoTitle] = useState(existingCollection?.seoTitle || '');
   const [seoDescription, setSeoDescription] = useState(existingCollection?.seoDescription || '');
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingImage(true);
+    try {
+      const res = await uploadMediaToCloudinaryAPI(file, 'collections');
+      if (res && res.url) {
+        setImage(res.url);
+      }
+    } catch (err: any) {
+      alert(`Image upload failed: ${err.message || 'Error uploading file'}`);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,14 +181,38 @@ export const CollectionFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = fa
             </h3>
 
             <div className="space-y-3 text-xs">
-              <input
-                type="text"
-                value={image}
-                onChange={e => setImage(e.target.value)}
-                className="w-full px-3 py-2 bg-[#F8F7F3] border border-[#E8E5DE] rounded-xl text-xs font-medium"
-              />
+              <div>
+                <label className="block font-bold text-[#111111] mb-1">Upload Banner Photo (Cloudinary CDN)</label>
+                <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-[#D4AF37]/60 rounded-xl cursor-pointer bg-[#FDFCF7] hover:bg-[#F8F7F3] transition-colors mb-2">
+                  {uploadingImage ? (
+                    <div className="flex items-center gap-2 text-xs font-semibold text-[#D4AF37]">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Uploading to Cloudinary CDN...</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center pt-2 pb-2 text-center px-3">
+                      <Upload className="w-5 h-5 text-[#D4AF37] mb-1" />
+                      <p className="text-[11px] font-bold text-[#111111]">Upload Banner Image File</p>
+                      <p className="text-[9px] text-[#6B6B6B]">JPG, PNG, WEBP — streams to Cloudinary CDN</p>
+                    </div>
+                  )}
+                  <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={uploadingImage} />
+                </label>
+              </div>
+
+              <div>
+                <label className="block font-bold text-[#111111] mb-1">Image CDN URL</label>
+                <input
+                  type="text"
+                  value={image}
+                  onChange={e => setImage(e.target.value)}
+                  placeholder="https://res.cloudinary.com/..."
+                  className="w-full px-3 py-2 bg-[#F8F7F3] border border-[#E8E5DE] rounded-xl text-xs font-medium"
+                />
+              </div>
+
               <div className="relative w-full h-40 rounded-xl overflow-hidden bg-[#F8F7F3] border border-[#E8E5DE]">
-                <img src={image} alt="Collection Preview" className="w-full h-full object-cover" />
+                <img src={image || 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=600&h=600&fit=crop&auto=format'} alt="Collection Preview" className="w-full h-full object-cover" />
               </div>
             </div>
           </div>

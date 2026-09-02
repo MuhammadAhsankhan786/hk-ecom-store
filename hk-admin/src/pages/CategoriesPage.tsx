@@ -26,7 +26,7 @@ export const CategoriesPage: React.FC = () => {
       header: 'Category Name',
       render: (c) => (
         <div className="flex items-center gap-3">
-          <img src={c.image} alt={c.name} className="w-10 h-10 rounded-lg object-cover border border-[#E8E5DE]" />
+          <img src={c.image || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format'} alt={c.name} className="w-10 h-10 rounded-lg object-cover border border-[#E8E5DE]" />
           <div>
             <p className="font-bold text-[#111111]">{c.name}</p>
             <p className="text-[10px] text-[#6B6B6B]">Slug: /{c.slug}</p>
@@ -94,7 +94,7 @@ export const CollectionsPage: React.FC = () => {
       header: 'Collection Name',
       render: (col) => (
         <div className="flex items-center gap-3">
-          <img src={col.image} alt={col.name} className="w-10 h-10 rounded-lg object-cover border border-[#E8E5DE]" />
+          <img src={col.image || 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=600&h=600&fit=crop&auto=format'} alt={col.name} className="w-10 h-10 rounded-lg object-cover border border-[#E8E5DE]" />
           <div>
             <p className="font-bold text-[#111111]">{col.name}</p>
             <p className="text-[10px] text-[#6B6B6B] truncate max-w-xs">{col.description}</p>

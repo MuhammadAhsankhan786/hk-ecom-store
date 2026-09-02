@@ -21,7 +21,7 @@ export const InventoryPage: React.FC = () => {
       header: 'Product Name',
       render: (p) => (
         <div className="flex items-center gap-3">
-          <img src={p.images[0]?.url} alt={p.name} className="w-10 h-10 rounded-lg object-cover border border-[#E8E5DE]" />
+          <img src={p.images[0]?.url || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format'} alt={p.name} className="w-10 h-10 rounded-lg object-cover border border-[#E8E5DE]" />
           <div>
             <p className="font-bold text-[#111111]">{p.name}</p>
             <p className="text-[10px] text-[#6B6B6B]">SKU: {p.sku}</p>
