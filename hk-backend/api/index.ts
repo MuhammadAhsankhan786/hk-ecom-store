@@ -33,8 +33,16 @@ export const createExpressServer = async (expressInstance: express.Express) => {
 let cachedApp: any;
 
 export default async function handler(req: any, res: any) {
-  if (!cachedApp) {
-    cachedApp = await createExpressServer(server);
+  try {
+    if (!cachedApp) {
+      cachedApp = await createExpressServer(server);
+    }
+    server(req, res);
+  } catch (err: any) {
+    console.error('[Vercel Handler Error]', err);
+    res.status(500).json({
+      error: 'Vercel Serverless Function Startup Failure',
+      message: err?.message || String(err),
+    });
   }
-  server(req, res);
 }
