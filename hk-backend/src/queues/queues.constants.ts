@@ -1,0 +1,7 @@
+export const QUEUE_NOTIFICATIONS = 'notifications';
+export const QUEUE_INVENTORY_ALERTS = 'inventory-alerts';
+
+export const JOB_ORDER_CONFIRMATION = 'ORDER_CONFIRMATION';
+export const JOB_PAYMENT_CONFIRMATION = 'PAYMENT_CONFIRMATION';
+export const JOB_ORDER_STATUS_UPDATE = 'ORDER_STATUS_UPDATE';
+export const JOB_LOW_STOCK_ALERT = 'LOW_STOCK_ALERT';

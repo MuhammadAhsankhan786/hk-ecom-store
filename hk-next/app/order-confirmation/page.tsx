@@ -1,84 +1,206 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+import { getApiBaseUrl } from '../../src/services/api'
 
-export default function OrderConfirmation() {
-  const [orderId, setOrderId] = useState('HKF-784920')
+function OrderConfirmationContent() {
+  const searchParams = useSearchParams()
+  const queryOrderNumber = searchParams?.get('orderNumber') || 'HK-784920'
+  const queryOrderId = searchParams?.get('orderId') || ''
+
+  const [orderNumber, setOrderNumber] = useState(queryOrderNumber)
+  const [orderId, setOrderId] = useState(queryOrderId)
+  const [paymentStatus, setPaymentStatus] = useState<'COMPLETED' | 'PENDING' | 'FAILED'>('PENDING')
+  const [orderStatus, setOrderStatus] = useState<string>('PENDING')
+  const [loading, setLoading] = useState(true)
+  const [retrying, setRetrying] = useState(false)
+  const [retryError, setRetryError] = useState<string | null>(null)
 
   useEffect(() => {
-    setOrderId('HKF-' + Math.floor(100000 + Math.random() * 900000))
-  }, [])
+    if (queryOrderNumber) setOrderNumber(queryOrderNumber)
+    if (queryOrderId) setOrderId(queryOrderId)
+
+    const targetId = queryOrderId || queryOrderNumber
+    if (targetId) {
+      fetch(`${getApiBaseUrl()}/payments/verify/${targetId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.verified && data.paymentStatus === 'COMPLETED') {
+            setPaymentStatus('COMPLETED')
+            setOrderStatus(data.orderStatus || 'PROCESSING')
+          } else if (data.paymentStatus === 'FAILED' || data.paymentStatus === 'CANCELLED') {
+            setPaymentStatus('FAILED')
+            setOrderStatus(data.orderStatus || 'PENDING')
+          } else {
+            setPaymentStatus('PENDING')
+            setOrderStatus(data.orderStatus || 'PENDING')
+          }
+        })
+        .catch(() => {
+          setPaymentStatus('PENDING')
+        })
+        .finally(() => {
+          setLoading(false)
+        })
+    } else {
+      setLoading(false)
+    }
+  }, [queryOrderNumber, queryOrderId])
+
+  const handleRetryPayment = async () => {
+    const targetId = orderId || orderNumber
+    if (!targetId) return
+
+    setRetrying(true)
+    setRetryError(null)
+
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/payments/retry/${targetId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gateway: 'PayFast' }),
+      })
+
+      const data = await res.json()
+      if (res.ok && data.postUrl) {
+        if (data.params && Object.keys(data.params).length > 0) {
+          const form = document.createElement('form')
+          form.method = data.httpMethod || 'POST'
+          form.action = data.postUrl
+          Object.keys(data.params).forEach((key) => {
+            const input = document.createElement('input')
+            input.type = 'hidden'
+            input.name = key
+            input.value = String(data.params[key])
+            form.appendChild(input)
+          })
+          document.body.appendChild(form)
+          form.submit()
+        } else {
+          window.location.href = data.postUrl
+        }
+      } else {
+        throw new Error(data.message || 'Failed to initiate payment retry')
+      }
+    } catch (err: any) {
+      setRetryError(err.message || 'Payment retry failed')
+      setRetrying(false)
+    }
+  }
 
   return (
-    <main className="bg-[#F8F7F3] min-h-screen py-16 lg:py-24 flex items-center justify-center px-4">
-      <div className="bg-white max-w-xl w-full p-8 lg:p-12 shadow-sm border border-[#E8E5DE] text-center">
-        {/* Success Icon */}
-        <div className="w-16 h-16 bg-[#D4AF37]/10 text-[#D4AF37] rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path d="M20 6 9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+    <div className="bg-white max-w-xl w-full p-8 lg:p-12 shadow-sm border border-[#E8E5DE] text-center">
+      {loading ? (
+        <div className="py-12 flex flex-col items-center justify-center">
+          <svg className="animate-spin text-[#D4AF37] mb-4" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" strokeOpacity=".3" />
+            <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
           </svg>
+          <p className="text-sm font-semibold text-[#111111]">Verifying Payment Status Server-Side…</p>
         </div>
+      ) : (
+        <>
+          {/* Status Icon */}
+          {paymentStatus === 'COMPLETED' ? (
+            <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M20 6 9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+          ) : paymentStatus === 'FAILED' ? (
+            <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
+              </svg>
+            </div>
+          ) : (
+            <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+              </svg>
+            </div>
+          )}
 
-        <p className="text-[10px] uppercase tracking-widest font-semibold text-[#D4AF37] mb-2">Thank you for your order</p>
-        <h1 className="font-serif text-3xl font-500 text-[#111111] mb-2">Order Confirmed!</h1>
-        <p className="text-sm text-[#6B6B6B] mb-6">
-          We have received your order and are getting it ready for dispatch.
-        </p>
+          <p className="text-[10px] uppercase tracking-widest font-semibold text-[#D4AF37] mb-2">HK Fabric Order Summary</p>
+          
+          <h1 className="font-serif text-3xl font-500 text-[#111111] mb-2">
+            {paymentStatus === 'COMPLETED' ? 'Order Confirmed!' : paymentStatus === 'FAILED' ? 'Payment Unsuccessful' : 'Order Placed — Awaiting Payment Verification'}
+          </h1>
+          
+          <p className="text-sm text-[#6B6B6B] mb-6">
+            {paymentStatus === 'COMPLETED'
+              ? 'Your online payment was verified server-side and your order is now in processing.'
+              : paymentStatus === 'FAILED'
+              ? 'Your online payment was not completed or failed. You can safely retry payment below.'
+              : 'Your order has been recorded. Payment status will update automatically upon gateway confirmation.'}
+          </p>
 
-        {/* Order Details Card */}
-        <div className="bg-[#F8F7F3] p-5 text-left mb-8 space-y-3">
-          <div className="flex justify-between text-xs">
-            <span className="text-[#6B6B6B]">Order Number:</span>
-            <span className="font-semibold text-[#111111]">{orderId}</span>
+          {retryError && (
+            <div className="mb-6 p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs text-left">
+              ⚠️ {retryError}
+            </div>
+          )}
+
+          {/* Order Details Card */}
+          <div className="bg-[#F8F7F3] p-5 text-left mb-8 space-y-3">
+            <div className="flex justify-between text-xs">
+              <span className="text-[#6B6B6B]">Order Number:</span>
+              <span className="font-semibold text-[#111111]">{orderNumber}</span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className="text-[#6B6B6B]">Payment Gateway:</span>
+              <span className="font-semibold text-[#111111]">PayFast / Easypaisa Online</span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className="text-[#6B6B6B]">Server Payment Status:</span>
+              <span className={`font-semibold px-2 py-0.5 ${
+                paymentStatus === 'COMPLETED' ? 'text-emerald-700 bg-emerald-50' : paymentStatus === 'FAILED' ? 'text-rose-700 bg-rose-50' : 'text-amber-700 bg-amber-50'
+              }`}>
+                {paymentStatus}
+              </span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className="text-[#6B6B6B]">Order Status:</span>
+              <span className="font-semibold text-[#111111]">{orderStatus}</span>
+            </div>
           </div>
-          <div className="flex justify-between text-xs">
-            <span className="text-[#6B6B6B]">Payment Method:</span>
-            <span className="font-semibold text-[#111111]">Easypaisa Online</span>
+
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            {paymentStatus !== 'COMPLETED' && (
+              <button
+                onClick={handleRetryPayment}
+                disabled={retrying}
+                className="btn-gold flex-1 py-3.5 text-[10px] uppercase tracking-widest cursor-pointer disabled:opacity-50"
+              >
+                {retrying ? 'Initiating Payment Retry…' : '🔄 Retry Online Payment'}
+              </button>
+            )}
+            <Link href="/account" className="btn-dark flex-1 py-3.5 text-[10px] uppercase tracking-widest">
+              View Account Orders
+            </Link>
+            <Link href="/shop" className="btn-ghost flex-1 py-3.5 text-[10px] uppercase tracking-widest">
+              Continue Shopping
+            </Link>
           </div>
-          <div className="flex justify-between text-xs">
-            <span className="text-[#6B6B6B]">Payment Status:</span>
-            <span className="font-semibold text-green-600 bg-green-50 px-2 py-0.5">Paid</span>
-          </div>
-          <div className="flex justify-between text-xs">
-            <span className="text-[#6B6B6B]">Estimated Delivery:</span>
-            <span className="font-semibold text-[#111111]">3–5 Business Days</span>
-          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+export default function OrderConfirmation() {
+  return (
+    <main className="bg-[#F8F7F3] min-h-screen py-16 lg:py-24 flex items-center justify-center px-4">
+      <Suspense fallback={
+        <div className="bg-white max-w-xl w-full p-12 text-center text-sm font-semibold">
+          Loading order details…
         </div>
-
-        {/* Timeline */}
-        <div className="mb-8">
-          <p className="text-[10px] uppercase tracking-widest font-semibold text-[#111111] mb-4 text-left">What happens next?</p>
-          <div className="space-y-4 text-left">
-            {[
-              ['1. Order Confirmed', 'You will receive an email and SMS confirmation shortly.'],
-              ['2. Packing & Quality Check', 'Our team carefully packs and inspects your items.'],
-              ['3. Dispatch & Tracking', 'You will receive a tracking link via SMS once dispatched.'],
-              ['4. Delivery', 'Your parcel is delivered right to your doorstep.'],
-            ].map(([title, desc], i) => (
-              <div key={i} className="flex gap-3">
-                <div className="w-5 h-5 rounded-full bg-[#111111] text-white text-[10px] font-semibold flex items-center justify-center shrink-0 mt-0.5">
-                  {i + 1}
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-[#111111]">{title}</p>
-                  <p className="text-[11px] text-[#6B6B6B]">{desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* CTAs */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Link href="/account" className="btn-dark flex-1 py-3.5 text-[10px] uppercase tracking-widest">
-            View Order Status
-          </Link>
-          <Link href="/shop" className="btn-ghost flex-1 py-3.5 text-[10px] uppercase tracking-widest">
-            Continue Shopping
-          </Link>
-        </div>
-      </div>
+      }>
+        <OrderConfirmationContent />
+      </Suspense>
     </main>
   )
 }

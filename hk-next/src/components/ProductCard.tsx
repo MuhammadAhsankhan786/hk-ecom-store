@@ -24,20 +24,20 @@ export function isNewArrival(publishedAt?: string | Date, createdAt?: string | D
   const pubTime = new Date(dateStr).getTime()
   if (isNaN(pubTime)) return true
   const diffMs = Date.now() - pubTime
-  return diffMs <= 14 * 24 * 60 * 60 * 1000
+  return diffMs <= 5 * 24 * 60 * 60 * 1000
 }
 
 function BadgeTag({ badge }: { badge: string }) {
   const isNew = badge === 'new' || badge === 'NEW ARRIVAL' || badge === 'new arrival'
   return (
-    <span className={`text-[8px] sm:text-[9px] uppercase tracking-widest font-extrabold px-2 py-0.5 rounded-sm shadow-xs ${
+    <span className={`uppercase font-extrabold rounded-xs shadow-xs transition-all inline-flex items-center gap-1 ${
       isNew
-        ? 'bg-[#D4AF37] text-[#111111] border border-[#B89428]'
+        ? 'text-[7.5px] sm:text-[8.5px] tracking-wide px-1.5 py-0.5 bg-[#D92D20] text-white border border-[#B91C1C] animate-pulse ring-1 ring-[#EF4444]/40 leading-tight'
         : badge === 'limited'
-        ? 'bg-[#8B4513] text-white'
-        : 'bg-[#111111] text-white'
+        ? 'text-[8px] sm:text-[9px] tracking-widest px-2 py-0.5 bg-[#8B4513] text-white leading-tight'
+        : 'text-[8px] sm:text-[9px] tracking-widest px-2 py-0.5 bg-[#111111] text-white leading-tight'
     }`}>
-      {isNew ? 'NEW ARRIVAL' : (badge === 'limited' ? 'LIMITED' : badge.toUpperCase())}
+      {isNew ? '⚡ NEW ARRIVAL' : (badge === 'limited' ? 'LIMITED' : badge.toUpperCase())}
     </span>
   )
 }

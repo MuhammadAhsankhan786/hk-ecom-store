@@ -12,7 +12,7 @@ const STEPS = [
   { n: 1, label: 'Information' },
   { n: 2, label: 'Delivery' },
   { n: 3, label: 'Review' },
-  { n: 4, label: 'Payment' },
+  { n: 4, label: 'Online Payment' },
 ]
 
 function StepBar({ current }: { current: Step }) {
@@ -38,25 +38,25 @@ function StepBar({ current }: { current: Step }) {
   )
 }
 
-function InputField({ label, placeholder, type = 'text', required }: { label: string; placeholder?: string; type?: string; required?: boolean }) {
-  return (
-    <div>
-      <label className="block text-[10px] uppercase tracking-widest font-semibold text-[#111111] mb-1.5">{label}{required && <span className="text-red-500 ml-0.5">*</span>}</label>
-      <input
-        type={type}
-        placeholder={placeholder}
-        className="w-full border border-[#E8E5DE] px-3.5 py-2.5 text-sm text-[#111111] placeholder:text-[#B0ADA6] focus:outline-none focus:border-[#D4AF37] transition-colors"
-      />
-    </div>
-  )
-}
-
 export default function Checkout() {
   const { cart, cartTotal, clearCart } = useStore()
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
   const [paying, setPaying] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [selectedGateway, setSelectedGateway] = useState<'PayFast' | 'Easypaisa'>('PayFast')
+
+  const [formData, setFormData] = useState({
+    firstName: 'Ayesha',
+    lastName: 'Khan',
+    email: 'ayesha.khan@example.com',
+    phone: '03001234567',
+    address1: 'Main Boulevard, Gulberg III',
+    address2: 'Block H',
+    city: 'Lahore',
+    province: 'Punjab',
+    postalCode: '54000',
+  })
 
   const shipping = cartTotal >= 5000 ? 0 : 250
   const grandTotal = cartTotal + shipping
@@ -66,24 +66,31 @@ export default function Checkout() {
   }
 
   const handlePay = async () => {
+    if (cart.length === 0) {
+      setErrorMessage('Your cart is empty.')
+      return
+    }
+
     setPaying(true)
     setErrorMessage(null)
 
     try {
-      // Simulate API call to NestJS backend POST /orders with atomic stock check & idempotency
-      const response = await fetch(`${getApiBaseUrl()}/orders`, {
+      const idempotencyKey = `chk-${Date.now()}-${Math.floor(Math.random() * 100000)}`
+
+      // 1. Create Order in PENDING status with atomic stock reservation
+      const orderRes = await fetch(`${getApiBaseUrl()}/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-idempotency-key': `chk-${Date.now()}-${Math.random()}`,
+          'x-idempotency-key': idempotencyKey,
         },
         body: JSON.stringify({
-          customerName: 'Customer',
-          customerEmail: 'customer@example.com',
-          customerPhone: '+923001234567',
-          shippingAddress: 'Main Boulevard, Gulberg III',
-          city: 'Lahore',
-          paymentMethod: 'Easypaisa',
+          customerName: `${formData.firstName} ${formData.lastName}`,
+          customerEmail: formData.email,
+          customerPhone: formData.phone,
+          shippingAddress: `${formData.address1}, ${formData.address2}`,
+          city: formData.city,
+          paymentMethod: selectedGateway,
           items: cart.map(i => ({
             productId: String(i.id),
             productName: i.name,
@@ -94,21 +101,54 @@ export default function Checkout() {
             quantity: i.qty,
           })),
         }),
-      }).catch(() => null)
+      })
 
-      if (response && !response.ok) {
-        const errorData = await response.json().catch(() => null)
-        if (response.status === 409 || response.status === 400) {
-          throw new Error(errorData?.message || 'Sorry, this product was just purchased by another customer and is now out of stock.')
-        }
+      const orderData = await orderRes.json()
+      if (!orderRes.ok || !orderData.order) {
+        throw new Error(orderData.message || 'Failed to place order due to stock availability or input validation.')
       }
 
-      // Simulate successful payment wait
-      await new Promise(r => setTimeout(r, 1500))
+      const createdOrder = orderData.order
+
+      // 2. Initiate Online Payment Session via Active Payment Provider
+      const paymentRes = await fetch(`${getApiBaseUrl()}/payments/initiate/${createdOrder.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-idempotency-key': idempotencyKey,
+        },
+        body: JSON.stringify({ gateway: selectedGateway }),
+      })
+
+      const paymentData = await paymentRes.json()
+
+      if (!paymentRes.ok) {
+        throw new Error(paymentData.message || 'Failed to initiate online payment session with payment provider.')
+      }
+
       clearCart()
-      router.push('/order-confirmation')
+
+      // 3. Post parameters or redirect to gateway return URL
+      if (paymentData.params && Object.keys(paymentData.params).length > 0 && paymentData.postUrl) {
+        const form = document.createElement('form')
+        form.method = paymentData.httpMethod || 'POST'
+        form.action = paymentData.postUrl
+
+        Object.keys(paymentData.params).forEach(key => {
+          const input = document.createElement('input')
+          input.type = 'hidden'
+          input.name = key
+          input.value = String(paymentData.params[key])
+          form.appendChild(input)
+        })
+
+        document.body.appendChild(form)
+        form.submit()
+      } else {
+        router.push(`/order-confirmation?orderNumber=${createdOrder.orderNumber}&orderId=${createdOrder.id}`)
+      }
     } catch (err: any) {
-      setErrorMessage(err.message || 'Sorry! This product just went out of stock. Stock was reserved by another concurrent customer.')
+      setErrorMessage(err.message || 'Sorry! Payment initiation failed or stock was reserved by another customer.')
       setPaying(false)
     }
   }
@@ -124,7 +164,7 @@ export default function Checkout() {
           </Link>
           <div className="flex items-center gap-1.5 text-xs text-[#6B6B6B]">
             <svg width="12" height="12" fill="none" stroke="#D4AF37" strokeWidth="1.5" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-            Secure Checkout
+            Encrypted Online Checkout
           </div>
         </div>
       </div>
@@ -139,14 +179,22 @@ export default function Checkout() {
               <div>
                 <h2 className="font-serif text-xl font-500 text-[#111111] mb-6">Customer Information</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <InputField label="First Name" placeholder="Ayesha" required />
-                  <InputField label="Last Name" placeholder="Khan" required />
-                  <div className="sm:col-span-2"><InputField label="Email Address" type="email" placeholder="you@example.com" required /></div>
-                  <div className="sm:col-span-2"><InputField label="Phone Number" placeholder="+92 300 0000000" required /></div>
-                </div>
-                <div className="mt-4 flex items-center gap-2">
-                  <input type="checkbox" id="newsletter" className="accent-[#D4AF37]" />
-                  <label htmlFor="newsletter" className="text-xs text-[#6B6B6B]">Subscribe to our newsletter for exclusive offers and new arrivals</label>
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest font-semibold text-[#111111] mb-1.5">First Name *</label>
+                    <input type="text" value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} className="w-full border border-[#E8E5DE] px-3.5 py-2.5 text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest font-semibold text-[#111111] mb-1.5">Last Name *</label>
+                    <input type="text" value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} className="w-full border border-[#E8E5DE] px-3.5 py-2.5 text-sm" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] uppercase tracking-widest font-semibold text-[#111111] mb-1.5">Email Address *</label>
+                    <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full border border-[#E8E5DE] px-3.5 py-2.5 text-sm" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] uppercase tracking-widest font-semibold text-[#111111] mb-1.5">Phone Number (Pakistani Mobile) *</label>
+                    <input type="text" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full border border-[#E8E5DE] px-3.5 py-2.5 text-sm" />
+                  </div>
                 </div>
               </div>
             )}
@@ -155,25 +203,26 @@ export default function Checkout() {
               <div>
                 <h2 className="font-serif text-xl font-500 text-[#111111] mb-6">Delivery Address</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="sm:col-span-2"><InputField label="Address Line 1" placeholder="House / Flat / Street" required /></div>
-                  <div className="sm:col-span-2"><InputField label="Address Line 2" placeholder="Area / Sector / Block (optional)" /></div>
-                  <InputField label="City" placeholder="Lahore" required />
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] uppercase tracking-widest font-semibold text-[#111111] mb-1.5">Address Line 1 *</label>
+                    <input type="text" value={formData.address1} onChange={e => setFormData({ ...formData, address1: e.target.value })} className="w-full border border-[#E8E5DE] px-3.5 py-2.5 text-sm" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] uppercase tracking-widest font-semibold text-[#111111] mb-1.5">Address Line 2</label>
+                    <input type="text" value={formData.address2} onChange={e => setFormData({ ...formData, address2: e.target.value })} className="w-full border border-[#E8E5DE] px-3.5 py-2.5 text-sm" />
+                  </div>
                   <div>
-                    <label className="block text-[10px] uppercase tracking-widest font-semibold text-[#111111] mb-1.5">Province <span className="text-red-500">*</span></label>
-                    <select className="w-full border border-[#E8E5DE] px-3.5 py-2.5 text-sm text-[#111111] bg-white focus:outline-none focus:border-[#D4AF37] transition-colors">
+                    <label className="block text-[10px] uppercase tracking-widest font-semibold text-[#111111] mb-1.5">City *</label>
+                    <input type="text" value={formData.city} onChange={e => setFormData({ ...formData, city: e.target.value })} className="w-full border border-[#E8E5DE] px-3.5 py-2.5 text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest font-semibold text-[#111111] mb-1.5">Province *</label>
+                    <select value={formData.province} onChange={e => setFormData({ ...formData, province: e.target.value })} className="w-full border border-[#E8E5DE] px-3.5 py-2.5 text-sm bg-white">
                       <option>Punjab</option>
                       <option>Sindh</option>
                       <option>KPK</option>
                       <option>Balochistan</option>
                       <option>Islamabad (ICT)</option>
-                      <option>AJK</option>
-                    </select>
-                  </div>
-                  <InputField label="Postal Code" placeholder="54000" />
-                  <div>
-                    <label className="block text-[10px] uppercase tracking-widest font-semibold text-[#111111] mb-1.5">Country</label>
-                    <select className="w-full border border-[#E8E5DE] px-3.5 py-2.5 text-sm text-[#111111] bg-white focus:outline-none focus:border-[#D4AF37] transition-colors">
-                      <option>Pakistan</option>
                     </select>
                   </div>
                 </div>
@@ -197,77 +246,68 @@ export default function Checkout() {
                     </div>
                   ))}
                 </div>
-
-                <div className="space-y-2.5 text-sm">
-                  <div className="flex justify-between text-[#6B6B6B]">
-                    <span>Subtotal</span><span>Rs. {cartTotal.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between text-[#6B6B6B]">
-                    <span>Shipping</span>
-                    <span className={shipping === 0 ? 'text-green-600 font-medium' : ''}>{shipping === 0 ? 'FREE' : `Rs. ${shipping}`}</span>
-                  </div>
-                  <div className="flex justify-between font-semibold text-[#111111] pt-2.5 border-t border-[#E8E5DE]">
-                    <span>Grand Total</span><span>Rs. {(cartTotal + shipping).toLocaleString()}</span>
-                  </div>
-                </div>
               </div>
             )}
 
             {step === 4 && (
               <div>
-                <h2 className="font-serif text-xl font-500 text-[#111111] mb-6">Payment</h2>
-                
-                {/* Out of Stock Error Alert */}
+                <h2 className="font-serif text-xl font-500 text-[#111111] mb-2">Online Payment Selection</h2>
+                <p className="text-xs text-[#6B6B6B] mb-6">HK Fabric is an online-payment-only store. Cash on Delivery is disabled.</p>
+
                 {errorMessage && (
                   <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-lg flex items-start gap-3 text-rose-800">
                     <svg className="w-5 h-5 shrink-0 text-rose-600 mt-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-wider">Inventory Reservation Alert</p>
+                      <p className="text-xs font-bold uppercase tracking-wider">Payment / Reservation Notice</p>
                       <p className="text-xs mt-0.5">{errorMessage}</p>
                     </div>
                   </div>
                 )}
 
-                <div className="border-2 border-[#D4AF37] bg-[#FDFCF7] p-5 mb-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-[#1DB954] rounded flex items-center justify-center">
-                      <span className="text-white text-[10px] font-bold tracking-wide">EP</span>
+                {/* Gateway Provider Selection */}
+                <div className="space-y-4 mb-6">
+                  <div
+                    onClick={() => setSelectedGateway('PayFast')}
+                    className={`border-2 p-4 cursor-pointer transition-colors flex items-center justify-between ${
+                      selectedGateway === 'PayFast' ? 'border-[#D4AF37] bg-[#FDFCF7]' : 'border-[#E8E5DE] bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 bg-[#111111] text-[#D4AF37] rounded flex items-center justify-center font-bold text-xs">
+                        PF
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-[#111111]">PayFast Online Checkout</p>
+                        <p className="text-[10px] text-[#6B6B6B]">Credit/Debit Cards, Bank Transfer & Mobile Wallet</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-[#111111]">Easypaisa Online Payment</p>
-                      <p className="text-[10px] text-[#6B6B6B]">Fast, secure, and convenient</p>
-                    </div>
-                    <div className="ml-auto w-4 h-4 rounded-full border-2 border-[#D4AF37] bg-[#D4AF37]" />
+                    <div className={`w-4 h-4 rounded-full border-2 ${selectedGateway === 'PayFast' ? 'border-[#D4AF37] bg-[#D4AF37]' : 'border-[#E8E5DE]'}`} />
                   </div>
-                  <p className="text-xs text-[#6B6B6B] leading-relaxed">
-                    You will be redirected to Easypaisa's secure payment gateway to complete your transaction. Your order will be confirmed immediately after successful payment.
-                  </p>
-                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                  <div>
-                    <label className="block text-[10px] uppercase tracking-widest font-semibold text-[#111111] mb-1.5">Easypaisa Account Number</label>
-                    <input
-                      type="text"
-                      placeholder="03XX-XXXXXXX"
-                      className="w-full border border-[#E8E5DE] px-3.5 py-2.5 text-sm placeholder:text-[#B0ADA6] focus:outline-none focus:border-[#D4AF37] transition-colors"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase tracking-widest font-semibold text-[#111111] mb-1.5">Account Holder Name</label>
-                    <input
-                      type="text"
-                      placeholder="Name on account"
-                      className="w-full border border-[#E8E5DE] px-3.5 py-2.5 text-sm placeholder:text-[#B0ADA6] focus:outline-none focus:border-[#D4AF37] transition-colors"
-                    />
+                  <div
+                    onClick={() => setSelectedGateway('Easypaisa')}
+                    className={`border-2 p-4 cursor-pointer transition-colors flex items-center justify-between ${
+                      selectedGateway === 'Easypaisa' ? 'border-[#D4AF37] bg-[#FDFCF7]' : 'border-[#E8E5DE] bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 bg-[#1DB954] text-white rounded flex items-center justify-center font-bold text-xs">
+                        EP
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-[#111111]">Easypaisa Wallet Checkout</p>
+                        <p className="text-[10px] text-[#6B6B6B]">Direct Easypaisa Mobile Wallet Payment</p>
+                      </div>
+                    </div>
+                    <div className={`w-4 h-4 rounded-full border-2 ${selectedGateway === 'Easypaisa' ? 'border-[#D4AF37] bg-[#D4AF37]' : 'border-[#E8E5DE]'}`} />
                   </div>
                 </div>
 
                 <div className="bg-[#F8F7F3] p-4 flex items-center gap-2 text-xs text-[#6B6B6B]">
                   <svg width="14" height="14" fill="none" stroke="#D4AF37" strokeWidth="1.5" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                  Your payment information is encrypted and processed securely.
+                  Transactions are encrypted and verified server-side with HMAC cryptographic security.
                 </div>
               </div>
             )}
@@ -296,15 +336,15 @@ export default function Checkout() {
               ) : (
                 <button
                   onClick={handlePay}
-                  disabled={paying}
+                  disabled={paying || cart.length === 0}
                   className="btn-gold px-10 py-3.5 text-[11px] uppercase tracking-widest disabled:opacity-60 flex items-center gap-2 cursor-pointer"
                 >
                   {paying ? (
                     <>
                       <svg className="animate-spin" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeOpacity=".3" /><path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" /></svg>
-                      Processing Payment & Verifying Stock…
+                      Initiating Gateway Payment…
                     </>
-                  ) : 'Pay Now — Rs. ' + grandTotal.toLocaleString()}
+                  ) : `PAY NOW — Rs. ${grandTotal.toLocaleString()}`}
                 </button>
               )}
             </div>

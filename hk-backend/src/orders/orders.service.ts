@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, NotFoundException, ConflictException }
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { OrderStatus, PaymentStatus, AdjustmentType } from '@prisma/client';
+import { QueuesService } from '../queues/queues.service';
 
 const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.PENDING]: [OrderStatus.PROCESSING, OrderStatus.CANCELLED],
@@ -15,7 +16,10 @@ const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
 
 @Injectable()
 export class OrdersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private queuesService: QueuesService,
+  ) {}
 
   async createOrder(dto: CreateOrderDto, customerId?: string) {
     try {
@@ -25,15 +29,7 @@ export class OrdersService {
 
         // 1. Stock Check & Atomic Stock Reservation (Race-Condition Protection)
         for (const item of dto.items) {
-          const product = await tx.product.findUnique({
-            where: { id: item.productId },
-          });
-
-          if (!product || product.isArchived) {
-            throw new BadRequestException(`Product "${item.productName}" is no longer available`);
-          }
-
-          // ATOMIC CONCURRENCY CHECK: Only decrement if stock >= item.quantity
+          // ATOMIC CONCURRENCY CHECK: Only decrement if stock >= item.quantity (1 single atomic SQL statement)
           const updateResult = await tx.product.updateMany({
             where: {
               id: item.productId,
@@ -46,21 +42,25 @@ export class OrdersService {
           });
 
           if (updateResult.count === 0) {
+            // Fallback lookup ONLY on failure path for precise exception message
+            const product = await tx.product.findUnique({
+              where: { id: item.productId },
+            });
+            if (!product || product.isArchived) {
+              throw new BadRequestException(`Product "${item.productName}" is no longer available`);
+            }
             throw new ConflictException(
               `Insufficient stock for "${product.name}". Another customer purchased the last stock item!`,
             );
           }
 
-          const prevQty = product.stock;
-          const newQty = Math.max(0, prevQty - item.quantity);
-
           // Audit inventory reservation
           await tx.inventoryTransaction.create({
             data: {
               productId: item.productId,
-              previousQty: prevQty,
+              previousQty: 0,
               adjustment: -item.quantity,
-              newQty,
+              newQty: 0,
               type: AdjustmentType.ORDER_RESERVATION,
               reason: `Order Placement Atomic Reservation`,
               performedBy: `System (Customer: ${dto.customerEmail})`,
@@ -155,24 +155,11 @@ export class OrdersService {
           message: 'Order created successfully',
           order,
         };
-      });
+      }, { timeout: 15000, maxWait: 10000 });
     } catch (err) {
-      if (err instanceof BadRequestException || err instanceof ConflictException) throw err;
-      // Mock order placement response if database connection is pending
-      const mockOrderNumber = `HK-${Date.now().toString().slice(-6)}`;
-      return {
-        message: 'Order created (Sandbox mode)',
-        order: {
-          id: `ord-mock-${Date.now()}`,
-          orderNumber: mockOrderNumber,
-          customerName: dto.customerName,
-          customerEmail: dto.customerEmail,
-          totalAmount: dto.items.reduce((s, i) => s + i.unitPrice * i.quantity, 0),
-          orderStatus: 'PENDING',
-          paymentStatus: 'PENDING',
-          items: dto.items,
-        },
-      };
+      if (err instanceof BadRequestException || err instanceof ConflictException || err instanceof NotFoundException) throw err;
+      console.error('[OrdersService.createOrder Error]', err);
+      throw new BadRequestException(`Failed to create order: ${err.message || err}`);
     }
   }
 
@@ -282,7 +269,21 @@ export class OrdersService {
           }
         }
 
-        return updatedOrder;
+        const result = updatedOrder;
+
+        // Non-blocking background job enqueue after DB commit
+        if (result && result.customerEmail) {
+          this.queuesService.enqueueOrderStatusUpdate({
+            orderId: result.id,
+            orderNumber: result.orderNumber,
+            customerEmail: result.customerEmail,
+            customerName: result.customerName,
+            status: result.orderStatus,
+            note,
+          });
+        }
+
+        return result;
       });
     } catch (err) {
       if (err instanceof BadRequestException || err instanceof NotFoundException) throw err;

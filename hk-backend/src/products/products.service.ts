@@ -5,7 +5,14 @@ import { ProductStatus } from '@prisma/client';
 
 @Injectable()
 export class ProductsService {
+  private cacheMap = new Map<string, { data: any; expiresAt: number }>();
+  private readonly CACHE_TTL_MS = 15000;
+
   constructor(private prisma: PrismaService) {}
+
+  clearCache() {
+    this.cacheMap.clear();
+  }
 
   async findAll(query?: {
     categoryId?: string;
@@ -23,21 +30,35 @@ export class ProductsService {
       const limit = query?.limit || 20;
       const skip = (page - 1) * limit;
 
+      const isPublicQuery = !query?.includeDrafts;
+      const cacheKey = JSON.stringify(query || {});
+      const now = Date.now();
+
+      if (isPublicQuery) {
+        const cached = this.cacheMap.get(cacheKey);
+        if (cached && cached.expiresAt > now) {
+          return cached.data;
+        }
+      }
+
       const where: any = { isArchived: false };
 
       if (query?.includeDrafts) {
         if (query?.status) where.status = query.status;
       } else {
-        // Public Storefront: Only show Published non-archived products
         where.status = ProductStatus.PUBLISHED;
       }
 
       if (query?.categoryId) {
-        // Check if categoryId is a UUID or name
-        const cat = await this.prisma.category.findFirst({
-          where: { OR: [{ id: query.categoryId }, { name: query.categoryId }, { slug: query.categoryId }] },
-        });
-        if (cat) where.categoryId = cat.id;
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(query.categoryId);
+        if (isUuid) {
+          where.categoryId = query.categoryId;
+        } else {
+          const cat = await this.prisma.category.findFirst({
+            where: { OR: [{ id: query.categoryId }, { name: query.categoryId }, { slug: query.categoryId }] },
+          });
+          if (cat) where.categoryId = cat.id;
+        }
       }
 
       if (query?.collectionId) where.collectionId = query.collectionId;
@@ -58,12 +79,25 @@ export class ProductsService {
       const [products, totalCount] = await Promise.all([
         this.prisma.product.findMany({
           where,
-          include: {
-            category: true,
-            collection: true,
-            images: { orderBy: { sortOrder: 'asc' } },
-            variants: true,
-            reviews: { where: { status: 'APPROVED' } },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            description: true,
+            sku: true,
+            price: true,
+            salePrice: true,
+            stock: true,
+            isFeatured: true,
+            status: true,
+            publishedAt: true,
+            createdAt: true,
+            categoryId: true,
+            collectionId: true,
+            category: { select: { id: true, name: true, slug: true } },
+            collection: { select: { id: true, name: true, slug: true } },
+            images: { select: { id: true, url: true, isPrimary: true, sortOrder: true }, orderBy: { sortOrder: 'asc' } },
+            variants: { select: { id: true, sku: true, size: true, color: true, price: true, stock: true } },
           },
           orderBy,
           skip,
@@ -74,7 +108,7 @@ export class ProductsService {
 
       const totalPages = Math.ceil(totalCount / limit);
 
-      return {
+      const result = {
         data: products,
         pagination: {
           page,
@@ -85,7 +119,14 @@ export class ProductsService {
           hasPreviousPage: page > 1,
         },
       };
-    } catch {
+
+      if (isPublicQuery) {
+        this.cacheMap.set(cacheKey, { data: result, expiresAt: now + this.CACHE_TTL_MS });
+      }
+
+      return result;
+    } catch (err: any) {
+      console.warn('[ProductsService.findAll Error]', err?.message || err);
       return { data: [], pagination: { page: 1, limit: 20, totalCount: 0, totalPages: 0, hasNextPage: false, hasPreviousPage: false } };
     }
   }
@@ -96,12 +137,28 @@ export class ProductsService {
         where: {
           OR: [{ id: idOrSlug }, { slug: idOrSlug }],
         },
-        include: {
-          category: true,
-          collection: true,
-          images: { orderBy: { sortOrder: 'asc' } },
-          variants: true,
-          reviews: { where: { status: 'APPROVED' } },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          description: true,
+          sku: true,
+          price: true,
+          salePrice: true,
+          stock: true,
+          isFeatured: true,
+          isArchived: true,
+          status: true,
+          publishedAt: true,
+          createdAt: true,
+          updatedAt: true,
+          categoryId: true,
+          collectionId: true,
+          category: { select: { id: true, name: true, slug: true, description: true, image: true, status: true } },
+          collection: { select: { id: true, name: true, slug: true, description: true, image: true, isFeatured: true } },
+          images: { select: { id: true, productId: true, url: true, isPrimary: true, sortOrder: true, altText: true }, orderBy: { sortOrder: 'asc' } },
+          variants: { select: { id: true, productId: true, sku: true, size: true, color: true, colorHex: true, price: true, stock: true } },
+          reviews: { where: { status: 'APPROVED' }, select: { id: true, productId: true, customerName: true, rating: true, title: true, comment: true, createdAt: true } },
         },
       });
 
@@ -121,10 +178,15 @@ export class ProductsService {
 
       let finalCategoryId: string | null = null;
       if (categoryId && categoryId.trim() !== '') {
-        const cat = await this.prisma.category.findFirst({
-          where: { OR: [{ id: categoryId }, { name: categoryId }, { slug: categoryId }] },
-        });
-        if (cat) finalCategoryId = cat.id;
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(categoryId);
+        if (isUuid) {
+          finalCategoryId = categoryId;
+        } else {
+          const cat = await this.prisma.category.findFirst({
+            where: { OR: [{ id: categoryId }, { name: categoryId }, { slug: categoryId }] },
+          });
+          if (cat) finalCategoryId = cat.id;
+        }
       }
 
       let finalCollectionId: string | null = null;
@@ -176,7 +238,7 @@ export class ProductsService {
       const stock = Number(dto.stock || 0);
       const isFeatured = Boolean(dto.isFeatured);
 
-      return await this.prisma.product.create({
+      const created = await this.prisma.product.create({
         data: {
           name: dto.name,
           slug,
@@ -212,6 +274,9 @@ export class ProductsService {
           variants: true,
         },
       });
+
+      this.clearCache();
+      return created;
     } catch (err: any) {
       if (err.code === 'P2002') {
         const target = err.meta?.target ? (Array.isArray(err.meta.target) ? err.meta.target.join(', ') : err.meta.target) : 'field';
@@ -234,10 +299,15 @@ export class ProductsService {
       let finalCategoryId: string | null | undefined = undefined;
       if (categoryId !== undefined) {
         if (categoryId && categoryId.trim() !== '') {
-          const cat = await this.prisma.category.findFirst({
-            where: { OR: [{ id: categoryId }, { name: categoryId }, { slug: categoryId }] },
-          });
-          finalCategoryId = cat ? cat.id : null;
+          const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(categoryId);
+          if (isUuid) {
+            finalCategoryId = categoryId;
+          } else {
+            const cat = await this.prisma.category.findFirst({
+              where: { OR: [{ id: categoryId }, { name: categoryId }, { slug: categoryId }] },
+            });
+            finalCategoryId = cat ? cat.id : null;
+          }
         } else {
           finalCategoryId = null;
         }
@@ -300,11 +370,14 @@ export class ProductsService {
         };
       }
 
-      return await this.prisma.product.update({
+      const updated = await this.prisma.product.update({
         where: { id },
         data: updateData,
         include: { category: true, collection: true, images: true, variants: true },
       });
+
+      this.clearCache();
+      return updated;
     } catch (err: any) {
       if (err instanceof NotFoundException) throw err;
       if (err.code === 'P2002') {
@@ -322,10 +395,13 @@ export class ProductsService {
       throw new NotFoundException(`Product "${id}" not found`);
     }
 
-    return await this.prisma.product.update({
+    const removed = await this.prisma.product.update({
       where: { id },
       data: { isArchived: true, status: ProductStatus.ARCHIVED },
     });
+
+    this.clearCache();
+    return removed;
   }
 
   async getCategories() {

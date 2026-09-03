@@ -26,9 +26,11 @@ enum OrderStatus {
 }
 
 enum PaymentStatus {
+  INITIATED
   PENDING
   COMPLETED
   FAILED
+  CANCELLED
   REFUNDED
 }
 
@@ -318,14 +320,22 @@ model Payment {
   id              String        @id @default(uuid())
   orderId         String
   order           Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider        String        @default("PAYFAST")
   amount          Float
+  currency        String        @default("PKR")
   paymentMethod   String
-  transactionRef  String?
+  transactionRef  String?       @unique
+  idempotencyKey  String?       @unique
   gatewayResponse String?
-  status          PaymentStatus @default(PENDING)
+  status          PaymentStatus @default(INITIATED)
+  initiatedAt     DateTime      @default(now())
+  completedAt     DateTime?
+  failedAt        DateTime?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
+  @@index([orderId])
+  @@index([transactionRef])
   @@map("payments")
 }
 

@@ -15,13 +15,28 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     }
     const isSsl = !isLocal && (connectionString.includes('sslmode=require') || connectionString.includes('neon.tech'));
 
+    // Configurable PostgreSQL Pool Size (Experiment: 25 connections, 3000ms timeout)
+    const maxConnections = process.env.DATABASE_POOL_MAX ? parseInt(process.env.DATABASE_POOL_MAX, 10) : 25;
+    const connectionTimeout = process.env.DATABASE_CONNECT_TIMEOUT ? parseInt(process.env.DATABASE_CONNECT_TIMEOUT, 10) : 3000;
+
     const pool = new Pool({
       connectionString,
       ssl: isSsl ? { rejectUnauthorized: false } : false,
+      max: maxConnections,
+      connectionTimeoutMillis: connectionTimeout,
+      idleTimeoutMillis: 30000,
     });
     const adapter = new PrismaPg(pool);
     super({ adapter });
     this.pool = pool;
+  }
+
+  getPoolStats() {
+    return {
+      totalCount: this.pool.totalCount,
+      idleCount: this.pool.idleCount,
+      waitingCount: this.pool.waitingCount,
+    };
   }
 
   async onModuleInit() {

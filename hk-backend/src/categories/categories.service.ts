@@ -6,15 +6,29 @@ import { CategoryStatus } from '@prisma/client';
 
 @Injectable()
 export class CategoriesService {
+  private cacheMap = new Map<string, { data: any; expiresAt: number }>();
+  private readonly CACHE_TTL_MS = 15000;
+
   constructor(private prisma: PrismaService) {}
 
+  private clearCache() {
+    this.cacheMap.clear();
+  }
+
   async findAll(includeInactive = false) {
+    const cacheKey = `categories:${includeInactive}`;
+    const now = Date.now();
+    const cached = this.cacheMap.get(cacheKey);
+    if (cached && cached.expiresAt > now) {
+      return cached.data;
+    }
+
     const where: any = {};
     if (!includeInactive) {
       where.status = CategoryStatus.PUBLISHED;
     }
 
-    return this.prisma.category.findMany({
+    const categories = await this.prisma.category.findMany({
       where,
       include: {
         children: true,
@@ -22,6 +36,9 @@ export class CategoriesService {
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    this.cacheMap.set(cacheKey, { data: categories, expiresAt: now + this.CACHE_TTL_MS });
+    return categories;
   }
 
   async findOne(idOrSlug: string) {
@@ -59,7 +76,7 @@ export class CategoriesService {
 
     const publishedAt = dto.status === CategoryStatus.PUBLISHED ? new Date() : null;
 
-    return this.prisma.category.create({
+    const result = await this.prisma.category.create({
       data: {
         name: dto.name,
         slug,
@@ -70,6 +87,9 @@ export class CategoriesService {
         publishedAt,
       },
     });
+
+    this.clearCache();
+    return result;
   }
 
   async update(id: string, dto: UpdateCategoryDto) {
@@ -88,10 +108,13 @@ export class CategoriesService {
       data.publishedAt = new Date();
     }
 
-    return this.prisma.category.update({
+    const result = await this.prisma.category.update({
       where: { id },
       data,
     });
+
+    this.clearCache();
+    return result;
   }
 
   async remove(id: string) {
@@ -100,9 +123,12 @@ export class CategoriesService {
       throw new NotFoundException(`Category "${id}" not found`);
     }
 
-    return this.prisma.category.update({
+    const result = await this.prisma.category.update({
       where: { id },
       data: { status: CategoryStatus.ARCHIVED },
     });
+
+    this.clearCache();
+    return result;
   }
 }

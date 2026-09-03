@@ -15,8 +15,13 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { CategoriesModule } from './categories/categories.module';
 import { CollectionsModule } from './collections/collections.module';
 import { AdminModule } from './admin/admin.module';
+import { EmailModule } from './email/email.module';
+import { QueuesModule } from './queues/queues.module';
+import { HealthModule } from './health/health.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+
+import { CustomThrottlerGuard } from './common/guards/custom-throttler.guard';
 
 @Module({
   imports: [
@@ -27,7 +32,7 @@ import { AppService } from './app.service';
     ThrottlerModule.forRoot([
       {
         ttl: 60000, // 1 minute window
-        limit: 120, // 120 requests per minute per IP
+        limit: 120, // 120 requests per minute per IP for normal traffic
       },
     ]),
     CommonModule,
@@ -43,13 +48,16 @@ import { AppService } from './app.service';
     CouponsModule,
     ReviewsModule,
     AdminModule,
+    EmailModule,
+    QueuesModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: CustomThrottlerGuard,
     },
   ],
 })
