@@ -38,7 +38,7 @@ function ShopContent() {
     async function loadAPIProducts() {
       try {
         const res = await fetchProductsFromAPI()
-        if (res && res.data && res.data.length > 0 && isMounted) {
+        if (res && res.data && isMounted) {
           const mapped: Product[] = res.data.map((p: any) => ({
             id: p.id,
             name: p.name,
@@ -48,7 +48,7 @@ function ShopContent() {
             oldPrice: p.salePrice || undefined,
             rating: 5.0,
             reviews: p.reviews?.length || 12,
-            image: p.images[0]?.url || 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=600&h=600&fit=crop&auto=format',
+            image: p.images && p.images.length > 0 ? p.images[0].url : 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=600&h=600&fit=crop&auto=format',
             images: p.images ? p.images.map((img: any) => img.url) : [],
             badge: 'new',
             publishedAt: p.publishedAt || p.createdAt,

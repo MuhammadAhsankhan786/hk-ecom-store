@@ -217,7 +217,7 @@ export default function Home() {
           fetchCollectionsFromAPI(),
         ])
 
-        if (res && res.data && res.data.length > 0 && isMounted) {
+        if (res && res.data && isMounted) {
           const mapped: Product[] = res.data.map((p: any) => ({
             id: p.id,
             name: p.name,
@@ -434,15 +434,15 @@ export default function Home() {
 
   const categoryTabs = [
     { id: 'All', label: 'All Products', count: liveProducts.length },
-    { id: 'Bedsheets', label: 'Bedsheets', count: liveProducts.filter(p => p.category === 'Bedsheets').length },
-    { id: 'Comforters', label: 'Comforters', count: liveProducts.filter(p => p.category === 'Comforters').length },
-    { id: 'Blankets', label: 'Blankets', count: liveProducts.filter(p => p.category === 'Blankets').length },
-    { id: 'Cushions', label: 'Cushions', count: liveProducts.filter(p => p.category === 'Cushions').length },
+    { id: 'Bedsheets', label: 'Bedsheets', count: liveProducts.filter(p => p.category?.toLowerCase() === 'bedsheets').length },
+    { id: 'Comforters', label: 'Comforters', count: liveProducts.filter(p => p.category?.toLowerCase() === 'comforters').length },
+    { id: 'Blankets', label: 'Blankets', count: liveProducts.filter(p => p.category?.toLowerCase() === 'blankets').length },
+    { id: 'Cushions', label: 'Cushions', count: liveProducts.filter(p => p.category?.toLowerCase() === 'cushions').length },
   ]
 
   const displayedProducts = selectedCategory === 'All'
     ? liveProducts
-    : liveProducts.filter(p => p.category === selectedCategory)
+    : liveProducts.filter(p => p.category?.toLowerCase() === selectedCategory.toLowerCase())
 
   return (
     <main>
