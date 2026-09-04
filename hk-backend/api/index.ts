@@ -1,8 +1,17 @@
+import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../src/app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
+
+// Ignore unhandled Redis connection errors on serverless environments
+process.on('unhandledRejection', (reason) => {
+  console.warn('[Vercel Serverless Warning] Unhandled Rejection:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.warn('[Vercel Serverless Warning] Uncaught Exception:', err);
+});
 
 const server = express();
 
