@@ -8,7 +8,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   private pool: Pool;
 
   constructor() {
-    const DEFAULT_DB_URL = 'postgresql://neondb_owner:npg_OuRQen1mU3dB@ep-muddy-lake-ay1a64tt-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require';
+    const DEFAULT_DB_URL = 'postgresql://neondb_owner:npg_1pEuA2xvCFfy@ep-muddy-lake-ay1a64tt-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
     let connectionString = process.env.DATABASE_URL || DEFAULT_DB_URL;
     const isLocal = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
     if (isLocal) {
