@@ -126,48 +126,35 @@ export const DashboardPage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <KPICard
           title="Total Sales"
-          value={`PKR ${(totalSalesPKR / 1000).toFixed(1)}k`}
-          change="+18.4%"
-          changeType="positive"
-          subtitle="vs previous month"
+          value={`PKR ${totalSalesPKR.toLocaleString()}`}
           icon={<Banknote className="w-5 h-5" />}
           isGoldHighlight={true}
         />
         <KPICard
           title="Total Orders"
           value={totalOrdersCount}
-          change="+12.2%"
-          changeType="positive"
-          subtitle="Fulfillment rate 94%"
           icon={<ShoppingBag className="w-5 h-5 text-indigo-600" />}
         />
         <KPICard
           title="Total Customers"
           value={totalCustomersCount}
-          change="+8.5%"
-          changeType="positive"
-          subtitle="68% returning buyers"
           icon={<Users className="w-5 h-5 text-sky-600" />}
         />
         <KPICard
           title="Active Products"
           value={totalProductsCount}
-          subtitle="In 4 main categories"
           icon={<PackageCheck className="w-5 h-5 text-emerald-600" />}
         />
         <KPICard
           title="Pending Orders"
           value={pendingOrdersCount}
-          changeType="neutral"
-          subtitle="Requires dispatch"
           icon={<Clock className="w-5 h-5 text-amber-600" />}
         />
         <KPICard
           title="Low Stock Alert"
           value={lowStockProducts.length}
-          change={lowStockProducts.length > 0 ? 'Action Needed' : 'Normal'}
+          change={lowStockProducts.length > 0 ? 'Action Needed' : undefined}
           changeType={lowStockProducts.length > 0 ? 'negative' : 'positive'}
-          subtitle="Below stock limit"
           icon={<AlertTriangle className="w-5 h-5 text-rose-600" />}
         />
       </div>

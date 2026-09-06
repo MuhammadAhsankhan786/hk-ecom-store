@@ -9,14 +9,15 @@ function getApiBaseUrl(): string {
   const envUrl = import.meta.env.VITE_API_URL;
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
-    if (host !== 'localhost' && host !== '127.0.0.1') {
-      if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
-        return envUrl;
-      }
-      return 'https://hk-backend-bice.vercel.app';
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return envUrl || 'http://localhost:5000';
     }
+    if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+      return envUrl;
+    }
+    return 'https://hk-backend-bice.vercel.app';
   }
-  return envUrl || 'https://hk-backend-bice.vercel.app';
+  return envUrl || 'http://localhost:5000';
 }
 
 function getStorefrontUrl(): string {

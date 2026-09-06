@@ -4,7 +4,7 @@ export type PaymentStatus = 'Initiated' | 'Pending' | 'Successful' | 'Failed' | 
 
 export type PaymentProvider = 'Easypaisa' | 'Cash on Delivery' | 'Credit/Debit Card';
 
-export type UserRole = 'Super Admin' | 'Store Manager' | 'Inventory Manager' | 'Order Manager' | 'Content Manager';
+export type UserRole = 'Super Admin' | 'Store Manager' | 'Inventory Manager';
 
 export interface ImageMetadata {
   id: string;

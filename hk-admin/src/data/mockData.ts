@@ -461,16 +461,6 @@ export const INITIAL_ROLES_MATRIX: RolePermission[] = [
     role: 'Inventory Manager',
     description: 'Access restricted to product catalog, stock adjustments, and inventory reports.',
     permissions: { products: true, orders: false, inventory: true, customers: false, content: false, reports: true, settings: false }
-  },
-  {
-    role: 'Order Manager',
-    description: 'Access restricted to order processing, fulfillment, and customer customer profiles.',
-    permissions: { products: false, orders: true, inventory: false, customers: true, content: false, reports: false, settings: false }
-  },
-  {
-    role: 'Content Manager',
-    description: 'Access restricted to homepage CMS, promo banners, collections, and product reviews.',
-    permissions: { products: true, orders: false, inventory: false, customers: false, content: true, reports: false, settings: false }
   }
 ];
 

@@ -90,11 +90,9 @@ export const AdminUserFormPage: React.FC = () => {
                   onChange={e => setRole(e.target.value as UserRole)}
                   className="w-full px-3 py-2.5 bg-[#F8F7F3] border border-[#E8E5DE] rounded-xl text-xs font-bold text-[#111111]"
                 >
-                  <option value="Super Admin">Super Admin (Full Store Access)</option>
-                  <option value="Store Manager">Store Manager (Products, Orders & Inventory)</option>
-                  <option value="Inventory Manager">Inventory Manager (Stock & Catalog)</option>
-                  <option value="Order Manager">Order Manager (Order Fulfillment & CRM)</option>
-                  <option value="Content Manager">Content Manager (CMS, Promos & Reviews)</option>
+                  <option value="Super Admin">Super Admin (SUPER_ADMIN)</option>
+                  <option value="Store Manager">Store Manager (STORE_MANAGER)</option>
+                  <option value="Inventory Manager">Inventory Manager (INVENTORY_MANAGER)</option>
                 </select>
               </div>
             </div>
@@ -115,8 +113,6 @@ export const AdminUserFormPage: React.FC = () => {
                   {role === 'Super Admin' && 'Unrestricted access to store settings, team management, and financial reports.'}
                   {role === 'Store Manager' && 'Can add/edit catalog, adjust stock, process orders, and moderate reviews.'}
                   {role === 'Inventory Manager' && 'Restricted to catalog management, warehouse stock levels, and inventory history.'}
-                  {role === 'Order Manager' && 'Restricted to customer order fulfillment, shipping labels, and customer CRM.'}
-                  {role === 'Content Manager' && 'Restricted to homepage CMS, promo banners, collections, and product reviews.'}
                 </p>
               </div>
 

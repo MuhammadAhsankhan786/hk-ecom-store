@@ -69,17 +69,15 @@ export const LoginPage: React.FC = () => {
         </div>
 
         <div>
-          <label className="block font-bold text-[#111111] mb-1">Select Active Role Simulation</label>
+          <label className="block font-bold text-[#111111] mb-1">Select System Role</label>
           <select
             value={selectedRole}
             onChange={e => setSelectedRole(e.target.value as UserRole)}
             className="w-full px-3 py-2.5 border border-[#E8E5DE] rounded-xl bg-[#F8F7F3] text-xs font-semibold"
           >
-            <option value="Super Admin">Super Admin (Full Access)</option>
-            <option value="Store Manager">Store Manager</option>
-            <option value="Inventory Manager">Inventory Manager</option>
-            <option value="Order Manager">Order Manager</option>
-            <option value="Content Manager">Content Manager</option>
+            <option value="Super Admin">Super Admin (SUPER_ADMIN)</option>
+            <option value="Store Manager">Store Manager (STORE_MANAGER)</option>
+            <option value="Inventory Manager">Inventory Manager (INVENTORY_MANAGER)</option>
           </select>
         </div>
 

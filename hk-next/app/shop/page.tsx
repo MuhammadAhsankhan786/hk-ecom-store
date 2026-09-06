@@ -29,7 +29,7 @@ function ShopContent() {
   const [priceRange, setPriceRange] = useState([0, 25000])
   const [filterOpen, setFilterOpen] = useState(false)
   const [gridView, setGridView] = useState<'2' | '3' | '4'>('4')
-  const [liveProducts, setLiveProducts] = useState<Product[]>(fallbackProducts)
+  const [liveProducts, setLiveProducts] = useState<Product[]>([])
 
   // Fetch live products from NestJS REST API and sync in real-time without page refresh
   useEffect(() => {
@@ -69,9 +69,7 @@ function ShopContent() {
             return timeB - timeA
           })
 
-          const existingIds = new Set(mapped.map(m => m.id))
-          const nonDuplicateFallback = fallbackProducts.filter(fp => !existingIds.has(fp.id))
-          setLiveProducts([...mapped, ...nonDuplicateFallback])
+          setLiveProducts(mapped)
         }
       } catch (err) {
         console.warn('Backend API connection pending or offline, fallback to store state:', err)

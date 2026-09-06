@@ -12,8 +12,7 @@ import type {
   RolePermission, AuditLog, StoreSettings, NotificationItem, UserRole, OrderStatus, PaymentProvider
 } from '../types/admin';
 import {
-  INITIAL_PRODUCTS, INITIAL_CATEGORIES, INITIAL_COLLECTIONS,
-  INITIAL_INVENTORY_LOGS, INITIAL_ORDERS, INITIAL_TRANSACTIONS,
+  INITIAL_TRANSACTIONS,
   INITIAL_CUSTOMERS, INITIAL_COUPONS, INITIAL_REVIEWS, INITIAL_CMS,
   INITIAL_ADMIN_USERS, INITIAL_ROLES_MATRIX, INITIAL_AUDIT_LOGS,
   INITIAL_STORE_SETTINGS, INITIAL_NOTIFICATIONS
@@ -112,11 +111,11 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [currentTab, setCurrentTab] = useState<AdminTab>('dashboard');
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
   
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
-  const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
-  const [collections, setCollections] = useState<Collection[]>(INITIAL_COLLECTIONS);
-  const [inventoryLogs, setInventoryLogs] = useState<InventoryAdjustment[]>(INITIAL_INVENTORY_LOGS);
-  const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [inventoryLogs, setInventoryLogs] = useState<InventoryAdjustment[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [transactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
   const [customers] = useState<Customer[]>(INITIAL_CUSTOMERS);
   const [coupons, setCoupons] = useState<Coupon[]>(INITIAL_COUPONS);

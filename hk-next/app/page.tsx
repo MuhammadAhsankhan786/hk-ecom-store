@@ -201,9 +201,9 @@ const trustItems = [
 export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
-  const [liveProducts, setLiveProducts] = useState<Product[]>(products)
-  const [liveCategories, setLiveCategories] = useState(categories)
-  const [liveCollections, setLiveCollections] = useState(collections)
+  const [liveProducts, setLiveProducts] = useState<Product[]>([])
+  const [liveCategories, setLiveCategories] = useState<any[]>([])
+  const [liveCollections, setLiveCollections] = useState<any[]>([])
 
   // Fetch live products, categories & collections from NestJS REST API and sync in real-time without page refresh
   useEffect(() => {
@@ -248,12 +248,10 @@ export default function Home() {
             return timeB - timeA
           })
 
-          const existingIds = new Set(mapped.map(m => m.id))
-          const nonDuplicateFallback = products.filter(fp => !existingIds.has(fp.id))
-          setLiveProducts([...mapped, ...nonDuplicateFallback])
+          setLiveProducts(mapped)
         }
 
-        if (catRes && Array.isArray(catRes) && catRes.length > 0 && isMounted) {
+        if (catRes && Array.isArray(catRes) && isMounted) {
           setLiveCategories(catRes.map((c: any) => ({
             name: c.name,
             desc: c.description || 'Pure cotton, satin & digital prints',
@@ -262,7 +260,7 @@ export default function Home() {
           })))
         }
 
-        if (colRes && Array.isArray(colRes) && colRes.length > 0 && isMounted) {
+        if (colRes && Array.isArray(colRes) && isMounted) {
           setLiveCollections(colRes.map((c: any) => ({
             name: c.name,
             tag: c.description || 'Curated Special Collection',
