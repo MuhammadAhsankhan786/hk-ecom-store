@@ -6,11 +6,13 @@ import { Readable } from 'stream';
 @Injectable()
 export class MediaService {
   constructor(private configService: ConfigService) {
-    cloudinary.config({
-      cloud_name: this.configService.get<string>('CLOUDINARY_CLOUD_NAME') || 'dhpqigvzj',
-      api_key: this.configService.get<string>('CLOUDINARY_API_KEY') || '896479657425435',
-      api_secret: this.configService.get<string>('CLOUDINARY_API_SECRET') || 'loy9PoDasQGKUBHjOvIujfgT0MY',
-    });
+    const cloudName = this.configService.get<string>('CLOUDINARY_CLOUD_NAME');
+    const apiKey = this.configService.get<string>('CLOUDINARY_API_KEY');
+    const apiSecret = this.configService.get<string>('CLOUDINARY_API_SECRET');
+
+    if (cloudName && apiKey && apiSecret) {
+      cloudinary.config({ cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret });
+    }
   }
 
   /**
@@ -21,11 +23,23 @@ export class MediaService {
       throw new BadRequestException('Please provide a valid image file');
     }
 
+    // 1. Strict MIME Type Validation
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      throw new BadRequestException(`Invalid file type (${file.mimetype}). Allowed image types: JPEG, PNG, WEBP.`);
+    }
+
+    // 2. Strict File Size Validation (Max 5MB)
+    const MAX_SIZE_BYTES = 5 * 1024 * 1024;
+    if (file.size > MAX_SIZE_BYTES) {
+      throw new BadRequestException('File size exceeds maximum allowed limit of 5MB.');
+    }
+
     return new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           folder: folder,
-          resource_type: 'auto',
+          resource_type: 'image',
         },
         (error, result) => {
           if (error || !result) {
@@ -42,9 +56,13 @@ export class MediaService {
 
   generateUploadSignature(folder = 'products') {
     const timestamp = Math.round(new Date().getTime() / 1000);
-    const apiSecret = this.configService.get<string>('CLOUDINARY_API_SECRET') || 'loy9PoDasQGKUBHjOvIujfgT0MY';
-    const apiKey = this.configService.get<string>('CLOUDINARY_API_KEY') || '896479657425435';
-    const cloudName = this.configService.get<string>('CLOUDINARY_CLOUD_NAME') || 'dhpqigvzj';
+    const apiSecret = this.configService.get<string>('CLOUDINARY_API_SECRET');
+    const apiKey = this.configService.get<string>('CLOUDINARY_API_KEY');
+    const cloudName = this.configService.get<string>('CLOUDINARY_CLOUD_NAME');
+
+    if (!apiSecret || !apiKey || !cloudName) {
+      throw new BadRequestException('Cloudinary API credentials are not configured on server.');
+    }
 
     const signature = cloudinary.utils.api_sign_request(
       { timestamp, folder },

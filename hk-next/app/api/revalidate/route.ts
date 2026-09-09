@@ -17,10 +17,10 @@ export async function GET(request: NextRequest) {
   const path = searchParams.get('path');
   const secret = searchParams.get('secret');
 
-  const expectedSecret = process.env.REVALIDATION_SECRET || 'hk_fabric_revalidation_secret_2026';
+  const expectedSecret = process.env.REVALIDATION_SECRET;
 
-  if (secret !== expectedSecret) {
-    return NextResponse.json({ message: 'Invalid revalidation secret' }, { status: 401, headers: corsHeaders });
+  if (!expectedSecret || secret !== expectedSecret) {
+    return NextResponse.json({ message: 'Invalid or unconfigured revalidation secret' }, { status: 401, headers: corsHeaders });
   }
 
   try {

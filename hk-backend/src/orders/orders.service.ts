@@ -1,7 +1,7 @@
-import { Injectable, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { OrderStatus, PaymentStatus, AdjustmentType } from '@prisma/client';
+import { OrderStatus, PaymentStatus, AdjustmentType, UserRole } from '@prisma/client';
 import { QueuesService } from '../queues/queues.service';
 
 const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
@@ -208,7 +208,7 @@ export class OrdersService {
     }
   }
 
-  async findOne(idOrNumber: string) {
+  async findOne(idOrNumber: string, requestingUser?: any) {
     try {
       const order = await this.prisma.order.findFirst({
         where: {
@@ -217,9 +217,18 @@ export class OrdersService {
         include: { items: true, payments: true, statusHistory: true },
       });
       if (!order) throw new NotFoundException('Order not found');
+
+      if (requestingUser) {
+        const isAdmin = requestingUser.role === UserRole.SUPER_ADMIN || requestingUser.role === UserRole.STORE_MANAGER;
+        const isOwner = (order.customerId && order.customerId === requestingUser.id) || (order.customerEmail && order.customerEmail.toLowerCase() === requestingUser.email?.toLowerCase());
+        if (!isAdmin && !isOwner) {
+          throw new ForbiddenException('Access denied: You are not authorized to view this order.');
+        }
+      }
+
       return order;
     } catch (err) {
-      if (err instanceof NotFoundException) throw err;
+      if (err instanceof NotFoundException || err instanceof ForbiddenException) throw err;
       throw new NotFoundException('Order not found');
     }
   }

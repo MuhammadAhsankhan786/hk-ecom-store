@@ -1,6 +1,10 @@
-import { Controller, Post, Get, Body, Param, Headers, Query, Req } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Post, Get, Body, Param, Headers, Query, Req, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '@prisma/client';
 
 @ApiTags('Payment Processing Engine')
 @Controller('payments')
@@ -71,6 +75,9 @@ export class PaymentsController {
   }
 
   @Post('refund/:orderId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.STORE_MANAGER)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Process refund for a completed payment' })
   refundOrder(
     @Param('orderId') orderId: string,

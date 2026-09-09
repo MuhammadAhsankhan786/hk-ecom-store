@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, InternalServerErrorException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto, RegisterDto } from './dto/auth.dto';
@@ -43,12 +43,7 @@ export class AuthService {
       };
     } catch (err) {
       if (err instanceof ConflictException) throw err;
-      // Offline fallback mock token generator
-      return {
-        message: 'Account registered (Pending DB sync)',
-        user: { id: 'usr-mock-1', email: dto.email, name: dto.name, role: 'CUSTOMER' },
-        accessToken: this.generateToken('usr-mock-1', dto.email, UserRole.CUSTOMER),
-      };
+      throw new InternalServerErrorException('Unable to register user account at this time. Please try again later.');
     }
   }
 
@@ -75,15 +70,7 @@ export class AuthService {
       };
     } catch (err) {
       if (err instanceof UnauthorizedException) throw err;
-      // Fallback mock login for development testing
-      if (dto.email === 'admin@hkfabric.pk' && dto.password === 'admin123') {
-        return {
-          message: 'Logged in as Admin (Dev Fallback)',
-          user: { id: 'admin-1', email: dto.email, name: 'HK Fabric Admin', role: UserRole.SUPER_ADMIN },
-          accessToken: this.generateToken('admin-1', dto.email, UserRole.SUPER_ADMIN),
-        };
-      }
-      throw new UnauthorizedException('Invalid credentials or database connection offline');
+      throw new InternalServerErrorException('Authentication service encountered an error. Please try again later.');
     }
   }
 

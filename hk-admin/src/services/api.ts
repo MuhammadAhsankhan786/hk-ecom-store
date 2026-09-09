@@ -236,8 +236,9 @@ export async function uploadMediaToCloudinaryAPI(file: File, folder = 'products'
 
 export async function revalidateStorefront(tag: string) {
   try {
-    const secret = 'hk_fabric_revalidation_secret_2026';
-    await fetch(`${getStorefrontUrl()}/api/revalidate?tag=${tag}&secret=${secret}`);
+    const secret = import.meta.env.VITE_REVALIDATION_SECRET;
+    if (!secret) return;
+    await fetch(`${getStorefrontUrl()}/api/revalidate?tag=${tag}&secret=${encodeURIComponent(secret)}`);
   } catch {
     // Non-critical — storefront cache revalidation failure should not block admin operations
   }

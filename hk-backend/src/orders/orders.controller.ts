@@ -45,9 +45,11 @@ export class OrdersController {
   }
 
   @Get(':idOrNumber')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get order details by ID or Order Number' })
-  findOne(@Param('idOrNumber') idOrNumber: string) {
-    return this.ordersService.findOne(idOrNumber);
+  findOne(@Param('idOrNumber') idOrNumber: string, @CurrentUser() user?: any) {
+    return this.ordersService.findOne(idOrNumber, user);
   }
 
   @Patch(':id/status')

@@ -299,15 +299,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return true;
       }
     } catch (err: any) {
-      // Dev fallback — only if backend is completely offline
-      if (email.trim() && pass.length >= 4) {
-        console.warn('Backend auth unavailable, using dev fallback:', err.message);
-        setIsAuthenticated(true);
-        localStorage.setItem('hk_admin_auth', 'true');
-        setCurrentTab('dashboard');
-        showToast(`Welcome back, ${currentUser.name}! (Offline mode)`);
-        return true;
-      }
+      showToast(`Login failed: ${err.message || 'Invalid credentials or backend unavailable'}`);
     }
     return false;
   };
