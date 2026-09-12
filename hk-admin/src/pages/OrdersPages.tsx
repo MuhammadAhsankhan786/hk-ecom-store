@@ -138,9 +138,9 @@ export const OrderDetailsPage: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus>(order.orderStatus);
   const [statusNote, setStatusNote] = useState('');
 
-  const handleUpdateStatus = (e: React.FormEvent) => {
+  const handleUpdateStatus = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateOrderStatus(order.id, selectedStatus, statusNote || `Status updated to ${selectedStatus}`);
+    await updateOrderStatus(order.id, selectedStatus, statusNote || `Status updated to ${selectedStatus}`);
   };
 
   return (

@@ -200,10 +200,108 @@ export async function deleteCollectionAPI(id: string) {
 
 export async function fetchAdminOrdersAPI() {
   try {
-    return await apiRequest('/orders');
+    const res = await apiRequest('/orders');
+    return res?.data || res;
   } catch {
     return null;
   }
+}
+
+export async function updateOrderStatusAPI(id: string, status: string, note?: string) {
+  return apiRequest(`/orders/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status, note }),
+  });
+}
+
+// ─── INVENTORY ───────────────────────────────────────────────────────────────
+
+export async function adjustStockAPI(payload: {
+  productId: string;
+  variantId?: string;
+  adjustment: number;
+  type: string;
+  reason: string;
+  notes?: string;
+}) {
+  return apiRequest('/inventory/adjust', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function fetchInventoryLogsAPI(productId?: string) {
+  try {
+    const path = productId ? `/inventory/logs?productId=${encodeURIComponent(productId)}` : '/inventory/logs';
+    return await apiRequest(path);
+  } catch {
+    return null;
+  }
+}
+
+// ─── COUPONS ─────────────────────────────────────────────────────────────────
+
+export async function fetchCouponsAPI() {
+  try {
+    return await apiRequest('/coupons');
+  } catch {
+    return null;
+  }
+}
+
+export async function createCouponAPI(payload: Record<string, any>) {
+  return apiRequest('/coupons', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteCouponAPI(id: string) {
+  return apiRequest(`/coupons/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+// ─── REVIEWS ─────────────────────────────────────────────────────────────────
+
+export async function fetchReviewsAdminAPI() {
+  try {
+    return await apiRequest('/reviews/admin');
+  } catch {
+    return null;
+  }
+}
+
+export async function updateReviewStatusAPI(id: string, status: string) {
+  return apiRequest(`/reviews/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  });
+}
+
+// ─── AUDIT LOGS & CMS ────────────────────────────────────────────────────────
+
+export async function fetchAuditLogsAPI() {
+  try {
+    return await apiRequest('/admin/audit-logs');
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchCMSAPI() {
+  try {
+    return await apiRequest('/admin/cms');
+  } catch {
+    return null;
+  }
+}
+
+export async function updateCMSAPI(payload: Record<string, any>) {
+  return apiRequest('/admin/cms', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 }
 
 // ─── MEDIA UPLOAD (Cloudinary via Backend) ───────────────────────────────────

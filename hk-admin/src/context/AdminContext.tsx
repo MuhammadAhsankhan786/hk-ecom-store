@@ -1,9 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import {
-  fetchAdminProductsAPI, fetchAdminOrdersAPI,
+  fetchAdminProductsAPI, fetchAdminOrdersAPI, updateOrderStatusAPI,
   createProductAPI, updateProductAPI, deleteProductAPI,
   fetchCategoriesAPI, createCategoryAPI, updateCategoryAPI, deleteCategoryAPI,
   fetchCollectionsAPI, createCollectionAPI, updateCollectionAPI, deleteCollectionAPI,
+  adjustStockAPI, fetchInventoryLogsAPI,
+  fetchCouponsAPI, createCouponAPI, deleteCouponAPI,
+  fetchReviewsAdminAPI, updateReviewStatusAPI,
+  fetchCMSAPI, updateCMSAPI,
   revalidateStorefront, loginAdminAPI
 } from '../services/api';
 import type {
@@ -616,13 +620,14 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const adjustStock = (productId: string, adjustment: number, type: InventoryAdjustment['type'], reason: string, notes?: string) => {
+  const adjustStock = async (productId: string, adjustment: number, type: InventoryAdjustment['type'], reason: string, notes?: string) => {
     const product = products.find(p => p.id === productId);
     if (!product) return;
 
     const prevQty = product.stock;
     const newQty = Math.max(0, prevQty + adjustment);
 
+    // Instant 0ms Optimistic UI Update
     setProducts(prev => prev.map(p => p.id === productId ? { ...p, stock: newQty } : p));
 
     const log: InventoryAdjustment = {
@@ -641,11 +646,26 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
     setInventoryLogs(prev => [log, ...prev]);
 
-    addAuditLog('Adjusted stock level', 'Inventory', product.sku, `${prevQty} units`, `${newQty} units`);
-    showToast(`Stock updated for ${product.sku}: ${prevQty} → ${newQty}`);
+    try {
+      const mappedType = type === 'Restock' ? 'RESTOCK' : (type === 'Damage/Loss' ? 'DAMAGE' : 'CORRECTION');
+      await adjustStockAPI({
+        productId,
+        adjustment,
+        type: mappedType,
+        reason,
+        notes,
+      });
+
+      refreshProducts();
+      addAuditLog('Adjusted stock level via API', 'Inventory', product.sku, `${prevQty} units`, `${newQty} units`);
+      showToast(`✓ Stock updated for ${product.sku}: ${prevQty} → ${newQty}`);
+    } catch (err: any) {
+      showToast(`✗ Stock API sync failed: ${err.message || 'Backend error'}`);
+      refreshProducts();
+    }
   };
 
-  const updateOrderStatus = (orderId: string, status: OrderStatus, note: string) => {
+  const updateOrderStatus = async (orderId: string, status: OrderStatus, note: string) => {
     setOrders(prev => prev.map(ord => {
       if (ord.id === orderId) {
         const timelineItem = {
@@ -654,28 +674,47 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           note,
           by: currentUser.name
         };
-        const updated = {
+        return {
           ...ord,
           orderStatus: status,
           timeline: [...ord.timeline, timelineItem]
         };
-        addAuditLog(`Order status changed to ${status}`, 'Order', ord.orderNumber, ord.orderStatus, status);
-        return updated;
       }
       return ord;
     }));
-    showToast(`Order status updated to ${status}.`);
+
+    try {
+      const mappedStatus = status.toUpperCase().replace(/\s+/g, '_');
+      await updateOrderStatusAPI(orderId, mappedStatus, note);
+      addAuditLog(`Order status changed to ${status} via API`, 'Order', orderId);
+      showToast(`✓ Order status updated to ${status}.`);
+    } catch (err: any) {
+      showToast(`✗ Order status API sync failed: ${err.message || 'Backend error'}`);
+    }
   };
 
-  const addCoupon = (c: Omit<Coupon, 'id' | 'usedCount'>) => {
+  const addCoupon = async (c: Omit<Coupon, 'id' | 'usedCount'>) => {
     const newCoup: Coupon = {
       ...c,
       id: `coup-${Date.now()}`,
       usedCount: 0
     };
     setCoupons(prev => [newCoup, ...prev]);
-    addAuditLog('Created promo coupon', 'Coupon', newCoup.code);
-    showToast(`Coupon ${newCoup.code} created successfully.`);
+
+    try {
+      await createCouponAPI({
+        code: c.code,
+        discountType: c.discountType === 'Percentage' ? 'PERCENTAGE' : 'FIXED_AMOUNT',
+        discountValue: Number(c.discountValue),
+        minOrderValue: c.minPurchase ? Number(c.minPurchase) : 0,
+        maxDiscount: c.maxDiscount ? Number(c.maxDiscount) : null,
+        usageLimit: c.usageLimit ? Number(c.usageLimit) : null,
+      });
+      addAuditLog('Created promo coupon via API', 'Coupon', newCoup.code);
+      showToast(`✓ Coupon ${newCoup.code} saved to database.`);
+    } catch (err: any) {
+      showToast(`✗ Coupon API creation failed: ${err.message || 'Backend error'}`);
+    }
   };
 
   const updateCoupon = (id: string, updates: Partial<Coupon>) => {
@@ -688,20 +727,37 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     showToast('Coupon status updated.');
   };
 
-  const deleteCoupon = (id: string) => {
+  const deleteCoupon = async (id: string) => {
+    const coup = coupons.find(c => c.id === id);
     setCoupons(prev => prev.filter(c => c.id !== id));
-    showToast('Coupon deleted.');
+    try {
+      await deleteCouponAPI(id);
+      showToast(`✓ Coupon ${coup?.code || id} deleted from database.`);
+    } catch (err: any) {
+      showToast(`✗ Coupon deletion API failed: ${err.message || 'Backend error'}`);
+    }
   };
 
-  const updateReviewStatus = (id: string, status: Review['status']) => {
+  const updateReviewStatus = async (id: string, status: Review['status']) => {
     setReviews(prev => prev.map(r => r.id === id ? { ...r, status } : r));
-    showToast(`Review status set to ${status}.`);
+    try {
+      const mappedStatus = status === 'Approved' ? 'APPROVED' : (status === 'Rejected' ? 'REJECTED' : 'PENDING');
+      await updateReviewStatusAPI(id, mappedStatus);
+      showToast(`✓ Review status set to ${status}.`);
+    } catch (err: any) {
+      showToast(`✗ Review status API update failed: ${err.message || 'Backend error'}`);
+    }
   };
 
-  const updateCMS = (updates: Partial<HomepageCMS>) => {
+  const updateCMS = async (updates: Partial<HomepageCMS>) => {
     setCms(prev => ({ ...prev, ...updates }));
-    addAuditLog('Updated Homepage CMS', 'Content', 'Homepage');
-    showToast('Homepage CMS settings saved.');
+    try {
+      await updateCMSAPI(updates);
+      addAuditLog('Updated Homepage CMS via API', 'Content', 'Homepage');
+      showToast('✓ Homepage CMS settings saved to database.');
+    } catch (err: any) {
+      showToast(`✗ CMS API update failed: ${err.message || 'Backend error'}`);
+    }
   };
 
   const addAdminUser = (user: Omit<AdminUser, 'id' | 'lastLogin'>) => {

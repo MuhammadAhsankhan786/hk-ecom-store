@@ -18,18 +18,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: { sub: string; email: string; role: string }) {
-    // If DB is connected, verify user exists
+    let user: any = null;
     try {
-      const user = await this.prisma.user.findUnique({
+      user = await this.prisma.user.findUnique({
         where: { id: payload.sub },
       });
-      if (!user) {
-        throw new UnauthorizedException('Invalid user token');
-      }
-      return user;
     } catch {
-      // Fallback for offline/disconnected DB mode
+      // Fallback for offline/disconnected DB mode only on connection error
       return { id: payload.sub, email: payload.email, role: payload.role, name: 'Authenticated User' };
     }
+
+    if (!user) {
+      throw new UnauthorizedException('User account no longer exists or has been revoked');
+    }
+    return user;
   }
 }

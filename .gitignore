@@ -37,6 +37,8 @@ Thumbs.db
 
 # Private Local Documentation & Agent Files (Ignored by Git)
 SYSTEM_ARCHITECTURE_&_INTERVIEW_GUIDE.md
+SYSTEM_STATUS_REPORT.md
+*REPORT*.md
 .agents/
 skills-lock.json
 

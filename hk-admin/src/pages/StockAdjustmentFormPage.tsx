@@ -18,10 +18,10 @@ export const StockAdjustmentFormPage: React.FC = () => {
   const currentStock = selectedProduct?.stock || 0;
   const newCalculatedStock = Math.max(0, currentStock + adjustment);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!productId) return;
-    adjustStock(productId, adjustment, type, reason, notes);
+    await adjustStock(productId, adjustment, type, reason, notes);
     setCurrentTab('inventory');
   };
 
