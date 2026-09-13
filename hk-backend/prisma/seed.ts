@@ -38,41 +38,74 @@ async function main() {
   });
   console.log(`✅ Admin User Seeded: ${admin.email}`);
 
-  // 2. Seed Categories
-  const catBedsheets = await prisma.category.upsert({
-    where: { slug: 'bedsheets' },
-    update: {},
-    create: {
-      name: 'Bedsheets',
-      slug: 'bedsheets',
-      description: 'Luxury cotton, satin, and bridal bedsheets',
-      image: '/images/categories/bedsheets.jpg',
-    },
-  });
+  // 2. Seed Parent & Sub-Categories
+  const parentCategoriesData = [
+    { name: 'Comforter Set Bridal 9 Pieces', slug: 'comforter-set-bridal-9-pieces', description: 'Royal 9-piece embroidered bridal comforter sets with zari work', image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800' },
+    { name: 'Bridal Bedcover 8 Pieces Set', slug: 'bridal-bedcover-8-pieces-set', description: 'Luxury 8-piece embroidered bridal bedcover sets', image: 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?auto=format&fit=crop&w=800' },
+    { name: 'Towel & Towel Sets', slug: 'towel-towel-sets', description: 'Ultra-soft combed cotton bath towel & hand towel sets', image: 'https://images.unsplash.com/photo-1616627547584-bf28cee262db?auto=format&fit=crop&w=800' },
+    { name: 'Fleece Summer Blankets', slug: 'fleece-summer-blankets', description: 'Lightweight breathable fleece blankets for summer & AC comfort', image: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=800' },
+    { name: 'Cotton Comforter & Comforter Sets', slug: 'cotton-comforter-comforter-sets', description: '100% Cotton quilted comforters and microgel duvet sets', image: 'https://images.unsplash.com/photo-1614226114676-8e02ac5f4763?auto=format&fit=crop&w=800' },
+    { name: 'Cotton Bedsheets', slug: 'cotton-bedsheets', description: 'Pure Egyptian cotton & satin smooth bedsheet sets', image: 'https://images.unsplash.com/photo-1685122121697-f4515ea401b0?auto=format&fit=crop&w=800' },
+    { name: 'Imported Bedspreads', slug: 'imported-bedspreads', description: 'Premium imported quilted & woven bedspreads', image: 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=800' },
+    { name: 'Medicated Pillows', slug: 'medicated-pillows', description: 'Orthopedic & ergonomic neck-support medicated pillows', image: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?auto=format&fit=crop&w=800' },
+    { name: 'Embroidery Bedsheets', slug: 'embroidery-bedsheets', description: 'Intricate machine & hand-embroidered luxury bedsheets', image: 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=800' },
+    { name: 'Velvet Bedsheets', slug: 'velvet-bedsheets', description: 'Plush Dutch velvet luxury bedsheet sets for winter', image: 'https://images.unsplash.com/photo-1623944436679-5412c658a358?auto=format&fit=crop&w=800' },
+    { name: 'Jacquard Bedsheets', slug: 'jacquard-bedsheets', description: 'Woven champagne & gold royal Jacquard bedsheet sets', image: 'https://images.unsplash.com/photo-1606796913825-2b02883605e9?auto=format&fit=crop&w=800' },
+  ];
 
-  const catComforters = await prisma.category.upsert({
-    where: { slug: 'comforters' },
-    update: {},
-    create: {
-      name: 'Comforters',
-      slug: 'comforters',
-      description: 'Quilted bridal comforters and duvet sets',
-      image: '/images/categories/comforters.jpg',
-    },
-  });
+  const seededCategories: Record<string, any> = {};
+  for (const cat of parentCategoriesData) {
+    const created = await prisma.category.upsert({
+      where: { slug: cat.slug },
+      update: { name: cat.name, description: cat.description, image: cat.image },
+      create: cat,
+    });
+    seededCategories[cat.slug] = created;
+  }
 
-  const catCushions = await prisma.category.upsert({
-    where: { slug: 'cushions' },
-    update: {},
-    create: {
-      name: 'Cushions',
-      slug: 'cushions',
-      description: 'Embroidered and velvet cushion covers',
-      image: '/images/categories/cushions.jpg',
-    },
-  });
+  // Seed Subcategories (Nested Variety Categories)
+  const subCategoriesData = [
+    // Cotton Bedsheets Subcategories
+    { name: 'Single Bedsheets', slug: 'single-bedsheets', parentSlug: 'cotton-bedsheets', description: 'Single size Egyptian cotton bedsheets' },
+    { name: 'Double Bedsheets', slug: 'double-bedsheets', parentSlug: 'cotton-bedsheets', description: 'Double king size cotton bedsheets' },
+    { name: 'Export Quality Bedsheets', slug: 'export-quality-bedsheets', parentSlug: 'cotton-bedsheets', description: 'High thread count export quality cotton satin sheets' },
 
-  console.log('✅ Categories Seeded');
+    // Bridal Set Subcategories
+    { name: 'Cotton Bridal Set', slug: 'cotton-bridal-set', parentSlug: 'comforter-set-bridal-9-pieces', description: 'Pure cotton breathable bridal sets' },
+    { name: 'Fancy Zari Bridal Set', slug: 'fancy-zari-bridal-set', parentSlug: 'comforter-set-bridal-9-pieces', description: 'Heavy gold zari embroidered royal bridal sets' },
+    { name: 'Velvet Bridal Set', slug: 'velvet-bridal-set', parentSlug: 'comforter-set-bridal-9-pieces', description: 'Royal velvet embroidered wedding sets' },
+    { name: 'Silk & Chenille Bridal Set', slug: 'silk-chenille-bridal-set', parentSlug: 'comforter-set-bridal-9-pieces', description: 'Luxury satin silk & chenille bridal sets' },
+
+    // Blankets Subcategories
+    { name: 'Single Fleece Blanket', slug: 'single-fleece-blanket', parentSlug: 'fleece-summer-blankets', description: 'Single size lightweight summer fleece blanket' },
+    { name: 'Double Fleece Blanket', slug: 'double-fleece-blanket', parentSlug: 'fleece-summer-blankets', description: 'Double size cozy summer blanket' },
+    { name: 'Heavy Mink Blanket', slug: 'heavy-mink-blanket', parentSlug: 'fleece-summer-blankets', description: 'Double-ply heavyweight Korean mink blanket' },
+
+    // Comforter Subcategories
+    { name: '6-Piece Comforter Set', slug: '6-piece-comforter-set', parentSlug: 'cotton-comforter-comforter-sets', description: 'Complete 6-piece comforter set with sheet & pillowcases' },
+    { name: '4-Piece Comforter Set', slug: '4-piece-comforter-set', parentSlug: 'cotton-comforter-comforter-sets', description: '4-piece duvet & pillowcase set' },
+    { name: 'King Size Duvet Set', slug: 'king-size-duvet-set', parentSlug: 'cotton-comforter-comforter-sets', description: 'High loft microgel king size duvet set' },
+  ];
+
+  for (const sub of subCategoriesData) {
+    const parentCat = seededCategories[sub.parentSlug];
+    if (parentCat) {
+      const createdSub = await prisma.category.upsert({
+        where: { slug: sub.slug },
+        update: { name: sub.name, description: sub.description, parentId: parentCat.id },
+        create: {
+          name: sub.name,
+          slug: sub.slug,
+          description: sub.description,
+          parentId: parentCat.id,
+          image: parentCat.image,
+        },
+      });
+      seededCategories[sub.slug] = createdSub;
+    }
+  }
+
+  console.log(`✅ ${parentCategoriesData.length} Root Categories & ${subCategoriesData.length} Subcategories Seeded`);
 
   // 3. Seed Collections
   const colBridal = await prisma.collection.upsert({
@@ -101,7 +134,7 @@ async function main() {
       salePrice: 9999,
       stock: 25,
       isFeatured: true,
-      categoryId: catComforters.id,
+      categoryId: seededCategories['comforter-set-bridal-9-pieces'].id,
       collectionId: colBridal.id,
       variants: {
         create: [

@@ -11,6 +11,7 @@ export const CategoryFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = fals
 
   const [name, setName] = useState(existingCategory?.name || '');
   const [slug, setSlug] = useState(existingCategory?.slug || '');
+  const [parentId, setParentId] = useState<string>(existingCategory?.parentId || '');
   const [description, setDescription] = useState(existingCategory?.description || '');
   const [image, setImage] = useState(existingCategory?.image || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format');
   const [status, setStatus] = useState<'Active' | 'Inactive' | 'Draft' | 'Archived'>(existingCategory?.status || 'Active');
@@ -48,11 +49,11 @@ export const CategoryFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = fals
     e.preventDefault();
     if (isEdit && selectedEntityId) {
       updateCategory(selectedEntityId, {
-        name, slug, description, image, status, sortOrder, seoTitle, seoDescription
+        name, slug, parentId: parentId || undefined, description, image, status, sortOrder, seoTitle, seoDescription
       });
     } else {
       addCategory({
-        name, slug, description, image, status, sortOrder, seoTitle, seoDescription
+        name, slug, parentId: parentId || undefined, description, image, status, sortOrder, seoTitle, seoDescription
       });
     }
     setCurrentTab('categories');
@@ -77,11 +78,11 @@ export const CategoryFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = fals
           </div>
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-          <Button variant="secondary" size="sm" onClick={() => setCurrentTab('categories')}>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Button variant="secondary" size="sm" onClick={() => setCurrentTab('categories')} className="flex-1 sm:flex-initial">
             Cancel
           </Button>
-          <Button variant="gold" size="sm" onClick={handleSubmit} icon={<Save className="w-3.5 h-3.5" />}>
+          <Button variant="gold" size="sm" onClick={handleSubmit} icon={<Save className="w-3.5 h-3.5" />} className="flex-1 sm:flex-initial">
             {isEdit ? 'Save Changes' : 'Publish Category'}
           </Button>
         </div>
@@ -120,6 +121,24 @@ export const CategoryFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = fals
                   placeholder="bedsheets"
                   className="w-full px-3 py-2.5 bg-[#F8F7F3] border border-[#E8E5DE] rounded-xl text-xs font-mono text-[#6B6B6B]"
                 />
+              </div>
+
+              <div>
+                <label className="block font-bold text-[#111111] mb-1">Parent Category (Optional Nesting)</label>
+                <select
+                  value={parentId}
+                  onChange={e => setParentId(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-[#F8F7F3] border border-[#E8E5DE] rounded-xl text-xs font-semibold"
+                >
+                  <option value="">None (Top-Level Main Category)</option>
+                  {categories
+                    .filter(c => c.id !== selectedEntityId && !c.parentId)
+                    .map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                </select>
               </div>
 
               <div>

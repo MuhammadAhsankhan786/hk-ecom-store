@@ -31,6 +31,7 @@ export class CategoriesService {
     const categories = await this.prisma.category.findMany({
       where,
       include: {
+        parent: true,
         children: true,
         _count: { select: { products: true } },
       },
@@ -47,6 +48,7 @@ export class CategoriesService {
         OR: [{ id: idOrSlug }, { slug: idOrSlug }],
       },
       include: {
+        parent: true,
         children: true,
         products: {
           where: { isArchived: false, status: 'PUBLISHED' },

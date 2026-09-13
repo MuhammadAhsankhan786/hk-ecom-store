@@ -49,40 +49,70 @@ const heroSlides = [
 
 const categories = [
   {
-    name: 'Bedsheets',
-    desc: 'Pure cotton, satin & digital prints',
+    name: 'Comforter Set Bridal 9 Pieces',
+    desc: 'Royal 9-piece embroidered bridal comforter sets',
+    image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&h=1000&fit=crop&q=100&auto=format',
+    to: `/shop?category=${encodeURIComponent('Comforter Set Bridal 9 Pieces')}`,
+  },
+  {
+    name: 'Bridal Bedcover 8 Pieces Set',
+    desc: 'Luxury 8-piece embroidered bridal bedcover sets',
     image: 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=800&h=1000&fit=crop&q=100&auto=format',
-    to: '/shop?category=Bedsheets',
+    to: `/shop?category=${encodeURIComponent('Bridal Bedcover 8 Pieces Set')}`,
   },
   {
-    name: 'Comforters',
-    desc: 'Heavy winter duvets & microgel quilts',
-    image: 'https://images.unsplash.com/photo-1623944436679-5412c658a358?w=800&h=1000&fit=crop&q=100&auto=format',
-    to: '/shop?category=Comforters',
+    name: 'Towel & Towel Sets',
+    desc: 'Ultra-soft combed cotton bath towel & hand towel sets',
+    image: 'https://images.unsplash.com/photo-1616627547584-bf28cee262db?w=800&h=1000&fit=crop&q=100&auto=format',
+    to: `/shop?category=${encodeURIComponent('Towel & Towel Sets')}`,
   },
   {
-    name: 'Blankets',
-    desc: 'Double-ply mink & cozy fleece blankets',
-    image: 'https://images.unsplash.com/photo-1619459074324-33d5f591c53e?w=800&h=1000&fit=crop&q=100&auto=format',
-    to: '/shop?category=Blankets',
+    name: 'Fleece Summer Blankets',
+    desc: 'Lightweight fleece blankets for summer & AC comfort',
+    image: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=800&h=1000&fit=crop&q=100&auto=format',
+    to: `/shop?category=${encodeURIComponent('Fleece Summer Blankets')}`,
   },
   {
-    name: 'Cushions',
-    desc: 'Gold embroidered & velvet cushions',
-    image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=1000&fit=crop&q=100&auto=format',
-    to: '/shop?category=Cushions',
+    name: 'Cotton Comforter & Comforter Sets',
+    desc: '100% Cotton quilted comforters and microgel duvets',
+    image: 'https://images.unsplash.com/photo-1614226114676-8e02ac5f4763?w=800&h=1000&fit=crop&q=100&auto=format',
+    to: `/shop?category=${encodeURIComponent('Cotton Comforter & Comforter Sets')}`,
   },
   {
-    name: 'Collections',
-    desc: 'Royal bridal & seasonal collections',
-    image: 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&h=1000&fit=crop&q=100&auto=format',
-    to: '/shop',
-  },
-  {
-    name: 'New Arrivals',
-    desc: 'Fresh luxury styles, just landed',
+    name: 'Cotton Bedsheets',
+    desc: 'Pure Egyptian cotton & satin smooth bedsheet sets',
     image: 'https://images.unsplash.com/photo-1685122121697-f4515ea401b0?w=800&h=1000&fit=crop&q=100&auto=format',
-    to: '/shop?badge=new',
+    to: `/shop?category=${encodeURIComponent('Cotton Bedsheets')}`,
+  },
+  {
+    name: 'Imported Bedspreads',
+    desc: 'Premium imported quilted & woven bedspreads',
+    image: 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=800&h=1000&fit=crop&q=100&auto=format',
+    to: `/shop?category=${encodeURIComponent('Imported Bedspreads')}`,
+  },
+  {
+    name: 'Medicated Pillows',
+    desc: 'Orthopedic neck-support medicated pillows',
+    image: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=800&h=1000&fit=crop&q=100&auto=format',
+    to: `/shop?category=${encodeURIComponent('Medicated Pillows')}`,
+  },
+  {
+    name: 'Embroidery Bedsheets',
+    desc: 'Intricate machine & hand-embroidered luxury bedsheets',
+    image: 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&h=1000&fit=crop&q=100&auto=format',
+    to: `/shop?category=${encodeURIComponent('Embroidery Bedsheets')}`,
+  },
+  {
+    name: 'Velvet Bedsheets',
+    desc: 'Plush Dutch velvet luxury bedsheet sets for winter',
+    image: 'https://images.unsplash.com/photo-1623944436679-5412c658a358?w=800&h=1000&fit=crop&q=100&auto=format',
+    to: `/shop?category=${encodeURIComponent('Velvet Bedsheets')}`,
+  },
+  {
+    name: 'Jacquard Bedsheets',
+    desc: 'Woven champagne & gold royal Jacquard bedsheet sets',
+    image: 'https://images.unsplash.com/photo-1606796913825-2b02883605e9?w=800&h=1000&fit=crop&q=100&auto=format',
+    to: `/shop?category=${encodeURIComponent('Jacquard Bedsheets')}`,
   },
 ]
 
@@ -202,8 +232,8 @@ export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
   const [liveProducts, setLiveProducts] = useState<Product[]>([])
-  const [liveCategories, setLiveCategories] = useState<any[]>([])
-  const [liveCollections, setLiveCollections] = useState<any[]>([])
+  const [liveCategories, setLiveCategories] = useState<any[]>(categories)
+  const [liveCollections, setLiveCollections] = useState<any[]>(collections)
 
   // Fetch live products, categories & collections from NestJS REST API and sync in real-time without page refresh
   useEffect(() => {
@@ -432,84 +462,150 @@ export default function Home() {
 
   const categoryTabs = [
     { id: 'All', label: 'All Products', count: liveProducts.length },
-    { id: 'Bedsheets', label: 'Bedsheets', count: liveProducts.filter(p => p.category?.toLowerCase() === 'bedsheets').length },
-    { id: 'Comforters', label: 'Comforters', count: liveProducts.filter(p => p.category?.toLowerCase() === 'comforters').length },
-    { id: 'Blankets', label: 'Blankets', count: liveProducts.filter(p => p.category?.toLowerCase() === 'blankets').length },
-    { id: 'Cushions', label: 'Cushions', count: liveProducts.filter(p => p.category?.toLowerCase() === 'cushions').length },
+    { id: 'Comforter Set Bridal 9 Pieces', label: 'Bridal 9 Pcs', count: liveProducts.filter(p => p.category?.toLowerCase() === 'comforter set bridal 9 pieces').length },
+    { id: 'Bridal Bedcover 8 Pieces Set', label: 'Bridal Bedcover 8 Pcs', count: liveProducts.filter(p => p.category?.toLowerCase() === 'bridal bedcover 8 pieces set').length },
+    { id: 'Towel & Towel Sets', label: 'Towel Sets', count: liveProducts.filter(p => p.category?.toLowerCase() === 'towel & towel sets').length },
+    { id: 'Fleece Summer Blankets', label: 'Summer Blankets', count: liveProducts.filter(p => p.category?.toLowerCase() === 'fleece summer blankets').length },
+    { id: 'Cotton Comforter & Comforter Sets', label: 'Cotton Comforters', count: liveProducts.filter(p => p.category?.toLowerCase() === 'cotton comforter & comforter sets').length },
+    { id: 'Cotton Bedsheets', label: 'Cotton Bedsheets', count: liveProducts.filter(p => p.category?.toLowerCase() === 'cotton bedsheets').length },
+    { id: 'Imported Bedspreads', label: 'Bedspreads', count: liveProducts.filter(p => p.category?.toLowerCase() === 'imported bedspreads').length },
+    { id: 'Medicated Pillows', label: 'Medicated Pillows', count: liveProducts.filter(p => p.category?.toLowerCase() === 'medicated pillows').length },
+    { id: 'Embroidery Bedsheets', label: 'Embroidery Sheets', count: liveProducts.filter(p => p.category?.toLowerCase() === 'embroidery bedsheets').length },
+    { id: 'Velvet Bedsheets', label: 'Velvet Sheets', count: liveProducts.filter(p => p.category?.toLowerCase() === 'velvet bedsheets').length },
+    { id: 'Jacquard Bedsheets', label: 'Jacquard Sheets', count: liveProducts.filter(p => p.category?.toLowerCase() === 'jacquard bedsheets').length },
   ]
 
   const displayedProducts = selectedCategory === 'All'
     ? liveProducts
-    : liveProducts.filter(p => p.category?.toLowerCase() === selectedCategory.toLowerCase())
+    : liveProducts.filter(p => {
+        const catLower = p.category?.toLowerCase() || ''
+        const targetLower = selectedCategory.toLowerCase()
+        if (catLower === targetLower) return true
+        const subMap: Record<string, string[]> = {
+          'cotton bedsheets': ['single bedsheets', 'double bedsheets', 'export quality bedsheets'],
+          'comforter set bridal 9 pieces': ['cotton bridal set', 'fancy zari bridal set', 'velvet bridal set', 'silk & chenille bridal set'],
+          'fleece summer blankets': ['single fleece blanket', 'double fleece blanket', 'heavy mink blanket'],
+          'cotton comforter & comforter sets': ['6-piece comforter set', '4-piece comforter set', 'king size duvet set'],
+        }
+        const allowedSubs = subMap[targetLower] || []
+        return allowedSubs.includes(catLower)
+      })
 
   return (
     <main>
-      {/* Hero Animated Slider Banner (4 Vibrant Eye-Catching Slides) */}
-      <section className="relative h-[340px] sm:h-[480px] lg:h-[620px] overflow-hidden bg-[#111111] group">
-        {heroSlides.map((slide, index) => (
-          <div
-            key={index}
-            className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${index === currentSlide ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'}`}
-          >
-            <img
-              src={slide.image}
-              alt={slide.title}
-              loading={index === 0 ? 'eager' : 'lazy'}
-              className="w-full h-full object-cover object-center"
-            />
+      {/* Flagship Hero Banner with Overlaid Interactive Category Cards Grid */}
+      <section className="relative bg-[#111111] overflow-hidden">
+        {/* Main Background Image Slider */}
+        <div className="relative min-h-[580px] lg:min-h-[660px] flex items-center">
+          {heroSlides.map((slide, index) => (
+            <div
+              key={index}
+              className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${index === currentSlide ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'}`}
+            >
+              <img
+                src={slide.image}
+                alt={slide.title}
+                loading={index === 0 ? 'eager' : 'lazy'}
+                className="w-full h-full object-cover object-center"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/65 to-black/35" />
+            </div>
+          ))}
 
-            {/* Crisp subtle overlay gradient for crystal clear image detail */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-transparent" />
+          {/* Hero Main Content & Overlaid Category Cards Container */}
+          <div className="relative z-20 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 w-full py-10 lg:py-14">
+            {/* Top Text & Heading */}
+            <div className="max-w-2xl text-white mb-6 lg:mb-8">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#D4AF37] mb-3 font-semibold backdrop-blur-xs">
+                <span>✨ HK FABRIC PAKISTAN</span>
+                <span className="w-1 h-1 rounded-full bg-[#D4AF37]" />
+                <span>OFFICIAL STORE</span>
+              </div>
+              <h1 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-500 text-white leading-tight mb-2 drop-shadow-lg">
+                {heroSlides[currentSlide].title}
+              </h1>
+              <p className="text-white/85 text-xs sm:text-sm leading-relaxed max-w-xl">
+                {heroSlides[currentSlide].subtitle}
+              </p>
+            </div>
 
-            <div className="relative z-10 h-full flex items-center">
-              <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 w-full">
-                <div className="max-w-xl text-white">
-                  <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.25em] text-[#D4AF37] mb-2 sm:mb-4 font-semibold">
-                    {slide.tag}
-                  </p>
-                  <h1 className="font-serif text-2xl sm:text-4xl lg:text-6xl font-500 text-white leading-tight mb-2 sm:mb-5 drop-shadow-md">
-                    {slide.title}
-                  </h1>
-                  <p className="text-white/85 text-xs sm:text-base leading-relaxed mb-4 sm:mb-8 max-w-md line-clamp-2 sm:line-clamp-none">
-                    {slide.subtitle}
-                  </p>
-                  <div className="flex flex-wrap gap-2.5 sm:gap-3">
-                    <Link href={slide.link} className="btn-gold px-5 sm:px-8 py-2.5 sm:py-3.5 text-[10px] sm:text-[11px] tracking-widest uppercase inline-block shadow-lg rounded-lg">
-                      {slide.ctaPrimary}
-                    </Link>
-                    <Link href="/shop" className="inline-block px-5 sm:px-8 py-2.5 sm:py-3.5 text-[10px] sm:text-[11px] tracking-widest uppercase font-semibold border border-white/80 text-white hover:bg-white hover:text-[#111111] transition-colors rounded-lg">
-                      {slide.ctaSecondary}
-                    </Link>
-                  </div>
+            {/* OVERLAID CATEGORY CARDS GRID (User's Core Requirement) */}
+            <div className="bg-black/50 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-white/20 shadow-2xl">
+              <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-ping" />
+                  <h3 className="text-xs sm:text-sm font-bold uppercase tracking-widest text-white">
+                    Explore Bedding Varieties at a Glance
+                  </h3>
                 </div>
+                <Link href="/shop" className="text-[10px] sm:text-xs text-[#D4AF37] hover:text-white font-semibold uppercase tracking-wider transition-colors">
+                  View Full Shop ({liveProducts.length} Items) →
+                </Link>
+              </div>
+
+              {/* Colorful Category Cards Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 sm:gap-3.5">
+                {[
+                  { name: 'Cotton Bedsheets', tag: 'Single, Double & Export', color: 'bg-emerald-500/25 text-emerald-300 border-emerald-500/40', bg: 'from-emerald-950/80 to-black/80', img: 'https://images.unsplash.com/photo-1685122121697-f4515ea401b0?w=400&q=80&fit=crop' },
+                  { name: 'Comforter Set Bridal 9 Pieces', tag: 'Royal 9-Piece Velvet', color: 'bg-rose-500/25 text-rose-300 border-rose-500/40', bg: 'from-rose-950/80 to-black/80', img: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400&q=80&fit=crop' },
+                  { name: 'Fleece Summer Blankets', tag: 'Single & Double Fleece', color: 'bg-amber-500/25 text-amber-300 border-amber-500/40', bg: 'from-amber-950/80 to-black/80', img: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=400&q=80&fit=crop' },
+                  { name: 'Bridal Bedcover 8 Pieces Set', tag: 'Luxury Embroidered', color: 'bg-purple-500/25 text-purple-300 border-purple-500/40', bg: 'from-purple-950/80 to-black/80', img: 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=400&q=80&fit=crop' },
+                  { name: 'Cotton Comforter & Comforter Sets', tag: '6-Pcs & 4-Pcs Sets', color: 'bg-sky-500/25 text-sky-300 border-sky-500/40', bg: 'from-sky-950/80 to-black/80', img: 'https://images.unsplash.com/photo-1614226114676-8e02ac5f4763?w=400&q=80&fit=crop' },
+                  { name: 'Velvet Bedsheets', tag: 'Plush Winter Velvet', color: 'bg-[#D4AF37]/25 text-[#D4AF37] border-[#D4AF37]/40', bg: 'from-yellow-950/80 to-black/80', img: 'https://images.unsplash.com/photo-1623944436679-5412c658a358?w=400&q=80&fit=crop' },
+                ].map((cat, idx) => (
+                  <Link
+                    key={idx}
+                    href={`/shop?category=${encodeURIComponent(cat.name)}`}
+                    className="group relative overflow-hidden rounded-xl border border-white/20 hover:border-[#D4AF37] transition-all duration-300 hover:scale-103 shadow-lg block"
+                  >
+                    <div className="aspect-[4/3] relative overflow-hidden bg-black/60">
+                      <img
+                        src={cat.img}
+                        alt={cat.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-75 group-hover:opacity-90"
+                      />
+                      <div className={`absolute inset-0 bg-gradient-to-t ${cat.bg}`} />
+                    </div>
+                    <div className="absolute inset-0 p-2 sm:p-2.5 flex flex-col justify-between z-10">
+                      <span className={`self-start text-[7.5px] sm:text-[8px] uppercase tracking-widest font-extrabold px-1.5 py-0.5 rounded border ${cat.color} backdrop-blur-xs`}>
+                        {cat.tag}
+                      </span>
+                      <div>
+                        <h4 className="font-serif text-[11px] sm:text-xs font-bold text-white leading-tight group-hover:text-[#D4AF37] transition-colors drop-shadow-sm line-clamp-2">
+                          {cat.name}
+                        </h4>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
               </div>
             </div>
           </div>
-        ))}
+        </div>
 
         {/* Carousel Arrow Controls */}
         <button
           onClick={prevSlide}
-          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-black/40 text-white border border-white/20 flex items-center justify-center opacity-70 sm:opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#D4AF37] hover:text-[#111111] text-lg sm:text-xl"
+          className="absolute left-3 top-1/3 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/50 text-white border border-white/30 flex items-center justify-center hover:bg-[#D4AF37] hover:text-[#111111] transition-colors cursor-pointer"
           aria-label="Previous Slide"
         >
           ‹
         </button>
         <button
           onClick={nextSlide}
-          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-black/40 text-white border border-white/20 flex items-center justify-center opacity-70 sm:opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#D4AF37] hover:text-[#111111] text-lg sm:text-xl"
+          className="absolute right-3 top-1/3 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/50 text-white border border-white/30 flex items-center justify-center hover:bg-[#D4AF37] hover:text-[#111111] transition-colors cursor-pointer"
           aria-label="Next Slide"
         >
           ›
         </button>
 
-        {/* Slide Indicators */}
-        <div className="absolute bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+        {/* Slide Progress Indicators */}
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-30 flex gap-2">
           {heroSlides.map((_, i) => (
             <button
               key={i}
               onClick={() => setCurrentSlide(i)}
-              className={`h-2 sm:h-2.5 rounded-full transition-all duration-300 ${i === currentSlide ? 'w-6 sm:w-8 bg-[#D4AF37]' : 'w-2 sm:w-2.5 bg-white/40 hover:bg-white/80'}`}
+              className={`h-1.5 rounded-full transition-all duration-300 ${i === currentSlide ? 'w-8 bg-[#D4AF37]' : 'w-2 bg-white/40 hover:bg-white/80'}`}
               aria-label={`Slide ${i + 1}`}
             />
           ))}

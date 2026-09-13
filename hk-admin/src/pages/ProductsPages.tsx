@@ -266,11 +266,11 @@ export const ProductFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = false
           </h2>
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-          <Button variant="secondary" onClick={() => setCurrentTab('products')}>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Button variant="secondary" onClick={() => setCurrentTab('products')} className="flex-1 sm:flex-initial">
             Cancel
           </Button>
-          <Button variant="gold" type="submit" icon={<CheckCircle className="w-4 h-4" />}>
+          <Button variant="gold" type="submit" icon={<CheckCircle className="w-4 h-4" />} className="flex-1 sm:flex-initial">
             {isEdit ? 'Save Changes' : 'Publish Product'}
           </Button>
         </div>

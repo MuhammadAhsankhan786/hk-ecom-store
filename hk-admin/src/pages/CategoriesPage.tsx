@@ -34,6 +34,22 @@ export const CategoriesPage: React.FC = () => {
         </div>
       )
     },
+    {
+      key: 'parentId',
+      header: 'Category Level',
+      render: (c) => {
+        const parent = categories.find(p => p.id === c.parentId);
+        return parent ? (
+          <span className="text-xs px-2 py-0.5 rounded-md bg-[#F4F3EE] text-[#111111] font-semibold border border-[#D0CCC0]">
+            Subcategory of {parent.name}
+          </span>
+        ) : (
+          <span className="text-xs px-2 py-0.5 rounded-md bg-[#D4AF37]/10 text-[#D4AF37] font-bold border border-[#D4AF37]/30">
+            Main Category
+          </span>
+        );
+      }
+    },
     { key: 'productsCount', header: 'Products Count', sortable: true, render: (c) => `${c.productsCount} Items` },
     {
       key: 'status',
@@ -59,14 +75,16 @@ export const CategoriesPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold text-[#111111]">Category Management</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-[#111111]">Category Management</h2>
           <p className="text-xs text-[#6B6B6B]">Organize products into parent and child categories</p>
         </div>
-        <Button variant="gold" onClick={handleCreate} icon={<Plus className="w-4 h-4" />}>
-          Add Category Form
-        </Button>
+        <div className="w-full sm:w-auto">
+          <Button variant="gold" onClick={handleCreate} icon={<Plus className="w-4 h-4" />} className="w-full sm:w-auto">
+            Add Category Form
+          </Button>
+        </div>
       </div>
 
       <DataTable data={categories} columns={columns} searchPlaceholder="Search categories..." />

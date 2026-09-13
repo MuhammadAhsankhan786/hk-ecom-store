@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useStore } from '../store'
 import { useDebounce } from '../hooks/useDebounce'
 import { products } from '../data/products'
+import { fetchCategoriesFromAPI } from '../services/api'
 
 export default function Header() {
   const router = useRouter()
@@ -14,6 +15,93 @@ export default function Header() {
   const [isFocused, setIsFocused] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
+  const [liveCategories, setLiveCategories] = useState<any[]>([])
+
+  // Fetch live categories dynamically from NestJS backend REST API
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadAPICategories() {
+      try {
+        const catRes = await fetchCategoriesFromAPI()
+        if (catRes && Array.isArray(catRes) && isMounted) {
+          setLiveCategories(catRes)
+        }
+      } catch (err) {
+        console.warn('Backend API connection pending or offline for header categories:', err)
+      }
+    }
+
+    loadAPICategories()
+    const intervalId = setInterval(loadAPICategories, 2000)
+    const handleFocus = () => loadAPICategories()
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      isMounted = false
+      clearInterval(intervalId)
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [])
+
+  // Compute dynamic root categories and child subcategories map
+  const rootCategories = useMemo(() => {
+    if (!liveCategories || liveCategories.length === 0) {
+      return [
+        { id: 'c-1', name: 'Cotton Bedsheets' },
+        { id: 'c-2', name: 'Comforter Set Bridal 9 Pieces' },
+        { id: 'c-3', name: 'Fleece Summer Blankets' },
+        { id: 'c-4', name: 'Cotton Comforter & Comforter Sets' },
+        { id: 'c-5', name: 'Velvet Bedsheets' },
+        { id: 'c-6', name: 'Jacquard Bedsheets' },
+        { id: 'c-7', name: 'Embroidery Bedsheets' },
+        { id: 'c-8', name: 'Medicated Pillows' },
+        { id: 'c-9', name: 'Towel & Towel Sets' },
+      ]
+    }
+    return liveCategories.filter((c: any) => !c.parentId)
+  }, [liveCategories])
+
+  const subCategoriesMap = useMemo(() => {
+    const map: Record<string, any[]> = {
+      'Cotton Bedsheets': [
+        { name: 'Single Bedsheets' },
+        { name: 'Double Bedsheets' },
+        { name: 'Export Quality Bedsheets' }
+      ],
+      'Comforter Set Bridal 9 Pieces': [
+        { name: 'Cotton Bridal Set' },
+        { name: 'Fancy Zari Bridal Set' },
+        { name: 'Velvet Bridal Set' },
+        { name: 'Silk & Chenille Bridal Set' }
+      ],
+      'Fleece Summer Blankets': [
+        { name: 'Single Fleece Blanket' },
+        { name: 'Double Fleece Blanket' },
+        { name: 'Heavy Mink Blanket' }
+      ],
+      'Cotton Comforter & Comforter Sets': [
+        { name: '6-Piece Comforter Set' },
+        { name: '4-Piece Comforter Set' },
+        { name: 'King Size Duvet Set' }
+      ]
+    }
+    if (liveCategories && liveCategories.length > 0) {
+      for (const c of liveCategories) {
+        if (c.parentId) {
+          const parentObj = liveCategories.find((p: any) => p.id === c.parentId)
+          const parentName = c.parent?.name || parentObj?.name || c.parentId
+          if (parentName) {
+            if (!map[parentName]) map[parentName] = []
+            if (!map[parentName].some((item: any) => item.name === c.name)) {
+              map[parentName].push(c)
+            }
+          }
+        }
+      }
+    }
+    return map
+  }, [liveCategories])
 
   // Apply 300ms Debounce to prevent API/Filter calls on every single keystroke
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
@@ -243,31 +331,112 @@ export default function Header() {
 
       {/* Primary Category Navigation */}
       <nav className="hidden lg:block bg-white border-b border-[#E8E5DE]">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
-          <ul className="flex items-center justify-center gap-8 py-3 text-[11px] font-semibold tracking-wider uppercase">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 relative group">
+          <ul className="flex items-center justify-center gap-6 py-3 text-[11px] font-semibold tracking-wider uppercase">
             <li>
               <Link href="/" className="text-[#111111] hover:text-[#D4AF37] transition-colors relative py-1 border-b-2 border-[#D4AF37]">
                 HOME
               </Link>
             </li>
+            
+            {/* Dynamic Bedding Categories Mega Hover Dropdown */}
             <li>
-              <Link href="/shop?category=Bedsheets" className="text-[#111111] hover:text-[#D4AF37] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37]">
-                BEDSHEETS
+              <Link href="/shop" className="text-[#111111] hover:text-[#D4AF37] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37] flex items-center gap-1">
+                BEDDING VARIETIES
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+              </Link>
+
+              {/* Dynamic Mega Dropdown Menu (Centered Relative to Site Container - Zero Overflow) */}
+              <div className="absolute left-1/2 -translate-x-1/2 top-full mt-0 w-[92vw] max-w-[1050px] bg-white border border-[#E8E5DE] rounded-xl shadow-2xl p-6 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="col-span-3 pb-2 mb-1 border-b border-[#F8F7F3] flex justify-between items-center text-[10px] text-[#D4AF37] font-bold tracking-widest uppercase">
+                  <span>HK Bedding Collections & Dynamic Varieties ({rootCategories.length} Categories)</span>
+                  <Link href="/shop" className="text-[#6B6B6B] hover:text-[#111111]">Explore Full Shop →</Link>
+                </div>
+                {/* Column 1: Cotton Bedsheets & Sub-varieties */}
+                <div className="space-y-2">
+                  <Link href={`/shop?category=${encodeURIComponent('Cotton Bedsheets')}`} className="font-bold text-xs text-[#111111] hover:text-[#D4AF37] block border-b border-[#E8E5DE] pb-1">
+                    Cotton Bedsheets
+                  </Link>
+                  <ul className="space-y-1 text-[11px] text-[#6B6B6B]">
+                    <li><Link href={`/shop?category=${encodeURIComponent('Single Bedsheets')}`} className="hover:text-[#D4AF37] block py-0.5">• Single Bedsheets</Link></li>
+                    <li><Link href={`/shop?category=${encodeURIComponent('Double Bedsheets')}`} className="hover:text-[#D4AF37] block py-0.5">• Double Bedsheets</Link></li>
+                    <li><Link href={`/shop?category=${encodeURIComponent('Export Quality Bedsheets')}`} className="hover:text-[#D4AF37] block py-0.5">• Export Quality Bedsheets</Link></li>
+                  </ul>
+
+                  <Link href={`/shop?category=${encodeURIComponent('Embroidery Bedsheets')}`} className="font-bold text-xs text-[#111111] hover:text-[#D4AF37] block border-b border-[#E8E5DE] pb-1 pt-2">
+                    Embroidery Sheets
+                  </Link>
+                  <Link href={`/shop?category=${encodeURIComponent('Velvet Bedsheets')}`} className="font-bold text-xs text-[#111111] hover:text-[#D4AF37] block border-b border-[#E8E5DE] pb-1 pt-1">
+                    Velvet Bedsheets
+                  </Link>
+                  <Link href={`/shop?category=${encodeURIComponent('Jacquard Bedsheets')}`} className="font-bold text-xs text-[#111111] hover:text-[#D4AF37] block border-b border-[#E8E5DE] pb-1 pt-1">
+                    Jacquard Bedsheets
+                  </Link>
+                </div>
+
+                {/* Column 2: Bridal Sets & Sub-varieties */}
+                <div className="space-y-2">
+                  <Link href={`/shop?category=${encodeURIComponent('Comforter Set Bridal 9 Pieces')}`} className="font-bold text-xs text-[#111111] hover:text-[#D4AF37] block border-b border-[#E8E5DE] pb-1">
+                    Bridal Sets (9 Pcs)
+                  </Link>
+                  <ul className="space-y-1 text-[11px] text-[#6B6B6B]">
+                    <li><Link href={`/shop?category=${encodeURIComponent('Cotton Bridal Set')}`} className="hover:text-[#D4AF37] block py-0.5">• Cotton Bridal Set</Link></li>
+                    <li><Link href={`/shop?category=${encodeURIComponent('Fancy Zari Bridal Set')}`} className="hover:text-[#D4AF37] block py-0.5">• Fancy Zari Bridal Set</Link></li>
+                    <li><Link href={`/shop?category=${encodeURIComponent('Velvet Bridal Set')}`} className="hover:text-[#D4AF37] block py-0.5">• Velvet Bridal Set</Link></li>
+                    <li><Link href={`/shop?category=${encodeURIComponent('Silk & Chenille Bridal Set')}`} className="hover:text-[#D4AF37] block py-0.5">• Silk & Chenille Bridal</Link></li>
+                  </ul>
+
+                  <Link href={`/shop?category=${encodeURIComponent('Bridal Bedcover 8 Pieces Set')}`} className="font-bold text-xs text-[#111111] hover:text-[#D4AF37] block border-b border-[#E8E5DE] pb-1 pt-2">
+                    Bridal Bedcover (8 Pcs)
+                  </Link>
+                </div>
+
+                {/* Column 3: Blankets, Comforters & Accessories */}
+                <div className="space-y-2">
+                  <Link href={`/shop?category=${encodeURIComponent('Fleece Summer Blankets')}`} className="font-bold text-xs text-[#111111] hover:text-[#D4AF37] block border-b border-[#E8E5DE] pb-1">
+                    Fleece Summer Blankets
+                  </Link>
+                  <ul className="space-y-1 text-[11px] text-[#6B6B6B]">
+                    <li><Link href={`/shop?category=${encodeURIComponent('Single Fleece Blanket')}`} className="hover:text-[#D4AF37] block py-0.5">• Single Fleece Blanket</Link></li>
+                    <li><Link href={`/shop?category=${encodeURIComponent('Double Fleece Blanket')}`} className="hover:text-[#D4AF37] block py-0.5">• Double Fleece Blanket</Link></li>
+                    <li><Link href={`/shop?category=${encodeURIComponent('Heavy Mink Blanket')}`} className="hover:text-[#D4AF37] block py-0.5">• Heavy Mink Blanket</Link></li>
+                  </ul>
+
+                  <Link href={`/shop?category=${encodeURIComponent('Cotton Comforter & Comforter Sets')}`} className="font-bold text-xs text-[#111111] hover:text-[#D4AF37] block border-b border-[#E8E5DE] pb-1 pt-2">
+                    Comforter Sets
+                  </Link>
+                  <ul className="space-y-1 text-[11px] text-[#6B6B6B]">
+                    <li><Link href={`/shop?category=${encodeURIComponent('6-Piece Comforter Set')}`} className="hover:text-[#D4AF37] block py-0.5">• 6-Piece Comforter Set</Link></li>
+                    <li><Link href={`/shop?category=${encodeURIComponent('4-Piece Comforter Set')}`} className="hover:text-[#D4AF37] block py-0.5">• 4-Piece Comforter Set</Link></li>
+                  </ul>
+
+                  <div className="pt-2 flex gap-3 text-xs font-bold text-[#111111]">
+                    <Link href={`/shop?category=${encodeURIComponent('Medicated Pillows')}`} className="hover:text-[#D4AF37]">Pillows</Link>
+                    <span>•</span>
+                    <Link href={`/shop?category=${encodeURIComponent('Towel & Towel Sets')}`} className="hover:text-[#D4AF37]">Towels</Link>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li>
+              <Link href={`/shop?category=${encodeURIComponent('Cotton Bedsheets')}`} className="text-[#111111] hover:text-[#D4AF37] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37]">
+                COTTON BEDSHEETS
               </Link>
             </li>
             <li>
-              <Link href="/shop?category=Comforters" className="text-[#111111] hover:text-[#D4AF37] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37]">
-                COMFORTERS
+              <Link href={`/shop?category=${encodeURIComponent('Comforter Set Bridal 9 Pieces')}`} className="text-[#111111] hover:text-[#D4AF37] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37]">
+                BRIDAL SETS
               </Link>
             </li>
             <li>
-              <Link href="/shop?category=Blankets" className="text-[#111111] hover:text-[#D4AF37] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37]">
+              <Link href={`/shop?category=${encodeURIComponent('Fleece Summer Blankets')}`} className="text-[#111111] hover:text-[#D4AF37] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37]">
                 BLANKETS
               </Link>
             </li>
             <li>
-              <Link href="/shop?category=Cushions" className="text-[#111111] hover:text-[#D4AF37] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37]">
-                CUSHIONS
+              <Link href={`/shop?category=${encodeURIComponent('Velvet Bedsheets')}`} className="text-[#111111] hover:text-[#D4AF37] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37]">
+                VELVET BEDSHEETS
               </Link>
             </li>
             <li>
@@ -280,11 +449,6 @@ export default function Header() {
                 NEW ARRIVALS
               </Link>
             </li>
-            <li>
-              <Link href="/contact" className="text-[#111111] hover:text-[#D4AF37] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37]">
-                CONTACT US
-              </Link>
-            </li>
           </ul>
         </div>
       </nav>
@@ -294,10 +458,10 @@ export default function Header() {
         <div className="fixed inset-0 z-50 flex lg:hidden">
           <div className="flex-1 bg-black/50" onClick={() => setMobileMenuOpen(false)} />
           <div className="bg-white w-80 max-w-[85vw] h-full shadow-xl overflow-y-auto flex flex-col p-6">
-            <div className="flex items-center justify-between pb-4 border-b border-[#E8E5DE] mb-6">
+            <div className="flex items-center justify-between pb-4 border-b border-[#E8E5DE] mb-4">
               <div className="flex flex-col">
                 <span className="font-serif text-xl font-bold">HK FABRIC</span>
-                <span className="text-[9px] text-[#D4AF37] tracking-widest uppercase">Timeless Comfort</span>
+                <span className="text-[9px] text-[#D4AF37] tracking-widest uppercase">Bedding Collection</span>
               </div>
               <button onClick={() => setMobileMenuOpen(false)} aria-label="Close Menu" className="p-1">
                 <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
@@ -306,13 +470,56 @@ export default function Header() {
               </button>
             </div>
 
-            <ul className="space-y-4 text-xs font-semibold uppercase tracking-wider text-[#111111]">
+            <div className="text-[10px] uppercase font-bold text-[#D4AF37] tracking-wider mb-2">
+              Browse Bedding Varieties & Sub-Categories
+            </div>
+
+            {/* Mobile Category & Subcategory Accordion List */}
+            <ul className="space-y-3 text-xs font-medium text-[#111111] mb-6">
+              {[
+                { name: 'Cotton Bedsheets', subs: ['Single Bedsheets', 'Double Bedsheets', 'Export Quality Bedsheets'] },
+                { name: 'Comforter Set Bridal 9 Pieces', subs: ['Cotton Bridal Set', 'Fancy Zari Bridal Set', 'Velvet Bridal Set', 'Silk & Chenille Bridal Set'] },
+                { name: 'Fleece Summer Blankets', subs: ['Single Fleece Blanket', 'Double Fleece Blanket', 'Heavy Mink Blanket'] },
+                { name: 'Cotton Comforter & Comforter Sets', subs: ['6-Piece Comforter Set', '4-Piece Comforter Set', 'King Size Duvet Set'] },
+                { name: 'Bridal Bedcover 8 Pieces Set', subs: [] },
+                { name: 'Embroidery Bedsheets', subs: [] },
+                { name: 'Velvet Bedsheets', subs: [] },
+                { name: 'Jacquard Bedsheets', subs: [] },
+                { name: 'Imported Bedspreads', subs: [] },
+                { name: 'Medicated Pillows', subs: [] },
+                { name: 'Towel & Towel Sets', subs: [] },
+              ].map(cat => (
+                <li key={cat.name} className="border-b border-[#F8F7F3] pb-2">
+                  <Link
+                    href={`/shop?category=${encodeURIComponent(cat.name)}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="font-bold text-[#111111] hover:text-[#D4AF37] flex items-center justify-between py-1"
+                  >
+                    <span>{cat.name}</span>
+                    {cat.subs.length > 0 && <span className="text-[10px] bg-[#F8F7F3] text-[#D4AF37] font-bold px-2 py-0.5 rounded-full">{cat.subs.length} sub-varieties</span>}
+                  </Link>
+                  {cat.subs.length > 0 && (
+                    <ul className="pl-3 mt-1 space-y-1 text-[11px] text-[#6B6B6B] border-l-2 border-[#D4AF37]/30">
+                      {cat.subs.map(sub => (
+                        <li key={sub}>
+                          <Link
+                            href={`/shop?category=${encodeURIComponent(sub)}`}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="hover:text-[#D4AF37] block py-0.5"
+                          >
+                            • {sub}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ))}
+            </ul>
+
+            <ul className="space-y-3 text-xs font-semibold uppercase tracking-wider text-[#111111] pt-3 border-t border-[#E8E5DE]">
               <li><Link href="/" onClick={() => setMobileMenuOpen(false)}>HOME</Link></li>
-              <li><Link href="/shop?category=Bedsheets" onClick={() => setMobileMenuOpen(false)}>BEDSHEETS</Link></li>
-              <li><Link href="/shop?category=Comforters" onClick={() => setMobileMenuOpen(false)}>COMFORTERS</Link></li>
-              <li><Link href="/shop?category=Blankets" onClick={() => setMobileMenuOpen(false)}>BLANKETS</Link></li>
-              <li><Link href="/shop?category=Cushions" onClick={() => setMobileMenuOpen(false)}>CUSHIONS</Link></li>
-              <li><Link href="/shop" onClick={() => setMobileMenuOpen(false)}>COLLECTIONS</Link></li>
+              <li><Link href="/shop" onClick={() => setMobileMenuOpen(false)}>ALL COLLECTIONS</Link></li>
               <li><Link href="/shop?badge=new" onClick={() => setMobileMenuOpen(false)}>NEW ARRIVALS</Link></li>
               <li><Link href="/contact" onClick={() => setMobileMenuOpen(false)}>CONTACT US</Link></li>
             </ul>
