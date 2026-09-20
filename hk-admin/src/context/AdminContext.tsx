@@ -16,7 +16,7 @@ import type {
   RolePermission, AuditLog, StoreSettings, NotificationItem, UserRole, OrderStatus, PaymentProvider
 } from '../types/admin';
 import {
-  INITIAL_TRANSACTIONS,
+  INITIAL_CATEGORIES, INITIAL_COLLECTIONS, INITIAL_TRANSACTIONS,
   INITIAL_CUSTOMERS, INITIAL_COUPONS, INITIAL_REVIEWS, INITIAL_CMS,
   INITIAL_ADMIN_USERS, INITIAL_ROLES_MATRIX, INITIAL_AUDIT_LOGS,
   INITIAL_STORE_SETTINGS, INITIAL_NOTIFICATIONS
@@ -117,18 +117,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
   
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([
-
-    { id: '6120d9a4-3a36-499c-a640-8bfaeeac1af8', name: 'Cotton Comforter & Comforter Sets', slug: 'cotton-comforter-comforter-sets', description: '', image: '', status: 'Active', productsCount: 0, parentId: '' },
-    { id: 'b73198d8-0ddf-42b0-8f7e-a2716182e12b', name: 'Fleece Summer Blankets', slug: 'fleece-summer-blankets', description: '', image: '', status: 'Active', productsCount: 0, parentId: '' },
-    { id: 'e0303b1a-452e-4491-b8a3-34fbaeaf63db', name: 'Comforter Set Bridal 9 Pieces', slug: 'comforter-set-bridal-9-pieces', description: '', image: '', status: 'Active', productsCount: 0, parentId: '' },
-    { id: 'fb4c04d1-9028-4562-a756-8f56bab4024a', name: 'Bridal Bedcover 8 Pieces Set', slug: 'bridal-bedcover-8-pieces-set', description: '', image: '', status: 'Active', productsCount: 0, parentId: '' },
-  ]);
-  const [collections, setCollections] = useState<Collection[]>([
-    { id: 'col-1', name: 'Royal Bridal Collection', slug: 'royal-bridal-collection', description: '', image: '', isFeatured: true, productsCount: 0, status: 'Active', sortOrder: 1, seoTitle: '', seoDescription: '' },
-    { id: 'col-2', name: 'Summer Cotton Collection', slug: 'summer-cotton-collection', description: '', image: '', isFeatured: true, productsCount: 0, status: 'Active', sortOrder: 2, seoTitle: '', seoDescription: '' },
-    { id: 'col-3', name: 'Winter Mink Collection', slug: 'winter-mink-collection', description: '', image: '', isFeatured: true, productsCount: 0, status: 'Active', sortOrder: 3, seoTitle: '', seoDescription: '' },
-  ]);
+  const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
+  const [collections, setCollections] = useState<Collection[]>(INITIAL_COLLECTIONS);
 
   const [inventoryLogs, setInventoryLogs] = useState<InventoryAdjustment[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -220,19 +210,20 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       const catRes = await fetchCategoriesAPI();
       if (catRes && Array.isArray(catRes) && catRes.length > 0) {
-        const mapped: Category[] = catRes.map((c: any) => ({
-          id: c.id,
-          name: c.name,
-          slug: c.slug || c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-          description: c.description || '',
-          image: c.image || '',
-          status: c.status === 'PUBLISHED' ? 'Active' : (c.status === 'ARCHIVED' ? 'Archived' : 'Draft'),
-          productsCount: c._count?.products || 0,
-          parentId: c.parentId || '',
-        }));
+        const mapped: Category[] = catRes.map((c: any) => {
+          const fallbackImg = INITIAL_CATEGORIES.find(ic => ic.name.toLowerCase() === c.name.toLowerCase())?.image || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format';
+          return {
+            id: c.id,
+            name: c.name,
+            slug: c.slug || c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+            description: c.description || '',
+            image: c.image && c.image.trim().length > 0 ? c.image : fallbackImg,
+            status: c.status === 'PUBLISHED' ? 'Active' : (c.status === 'ARCHIVED' ? 'Archived' : 'Draft'),
+            productsCount: c._count?.products || 0,
+            parentId: c.parentId || '',
+          };
+        });
         setCategories(mapped);
-      } else if (catRes && Array.isArray(catRes) && catRes.length === 0) {
-        setCategories([]);
       }
     } catch (err) {
       console.warn('Could not refresh categories from backend:', err);
@@ -243,19 +234,22 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       const colRes = await fetchCollectionsAPI();
       if (colRes && Array.isArray(colRes) && colRes.length > 0) {
-        setCollections(colRes.map((c: any) => ({
-          id: c.id,
-          name: c.name,
-          slug: c.slug,
-          description: c.description || '',
-          image: c.image || '',
-          isFeatured: c.isFeatured ?? true,
-          productsCount: c._count?.products || 0,
-          status: 'Active',
-          sortOrder: 1,
-          seoTitle: `${c.name} | HK Fabric`,
-          seoDescription: c.description || '',
-        })));
+        setCollections(colRes.map((c: any) => {
+          const fallbackImg = INITIAL_COLLECTIONS.find(ic => ic.name.toLowerCase() === c.name.toLowerCase())?.image || 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=600&h=600&fit=crop&auto=format';
+          return {
+            id: c.id,
+            name: c.name,
+            slug: c.slug,
+            description: c.description || '',
+            image: c.image && c.image.trim().length > 0 ? c.image : fallbackImg,
+            isFeatured: c.isFeatured ?? true,
+            productsCount: c._count?.products || 0,
+            status: 'Active',
+            sortOrder: 1,
+            seoTitle: `${c.name} | HK Fabric`,
+            seoDescription: c.description || '',
+          };
+        }));
       }
     } catch (err) {
       console.warn('Could not refresh collections from backend:', err);

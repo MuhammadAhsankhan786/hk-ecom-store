@@ -126,9 +126,10 @@ const categories = [
 ]
 
 const collections = [
-  { name: 'Royal Bridal Collection', tag: 'Velvet & Satin Heavy Sets', image: 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=1200&h=800&fit=crop&q=100&auto=format' },
-  { name: 'Summer Cotton Collection', tag: 'Light & breathable', image: 'https://images.unsplash.com/photo-1606796913825-2b02883605e9?w=1200&h=800&fit=crop&q=100&auto=format' },
-  { name: 'Winter Mink Collection', tag: 'Warm & cozy', image: 'https://images.unsplash.com/photo-1580301762395-21ce84d00bc6?w=1200&h=800&fit=crop&q=100&auto=format' },
+  { name: 'Wedding Collection', tag: 'Heavy gold zari embroidered 10-piece bridal velvet bed sets', image: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=1200&h=800&fit=crop&q=100&auto=format' },
+  { name: 'Summer Breeze 2026', tag: 'Breathable 100% Egyptian cotton satin digital printed sheets', image: 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=1200&h=800&fit=crop&q=100&auto=format' },
+  { name: 'Winter Warmth', tag: 'Heavy double-ply mink blankets and microgel duvets', image: 'https://images.unsplash.com/photo-1580301762395-21ce84d00bc6?w=1200&h=800&fit=crop&q=100&auto=format' },
+  { name: 'Best Sellers', tag: 'Top customer-rated home textile items across Pakistan', image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=1200&h=800&fit=crop&q=100&auto=format' },
 ]
 
 const reviewsData = [
@@ -290,21 +291,27 @@ export default function Home() {
           setLiveProducts(mapped)
         }
 
-        if (catRes && Array.isArray(catRes) && isMounted) {
-          setLiveCategories(catRes.map((c: any) => ({
-            name: c.name,
-            desc: c.description || 'Pure cotton, satin & digital prints',
-            image: c.image || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=800&h=1000&fit=crop&q=100&auto=format',
-            to: `/shop?category=${encodeURIComponent(c.name)}`,
-          })))
+        if (catRes && Array.isArray(catRes) && catRes.length > 0 && isMounted) {
+          setLiveCategories(catRes.map((c: any) => {
+            const staticMatch = categories.find(sc => sc.name.toLowerCase() === c.name?.toLowerCase())
+            return {
+              name: c.name,
+              desc: c.description || staticMatch?.desc || 'Pure cotton, satin & digital prints',
+              image: (c.image && c.image.trim().length > 0) ? c.image : (staticMatch?.image || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=800&h=1000&fit=crop&q=100&auto=format'),
+              to: `/shop?category=${encodeURIComponent(c.name)}`,
+            }
+          }))
         }
 
-        if (colRes && Array.isArray(colRes) && isMounted) {
-          setLiveCollections(colRes.map((c: any) => ({
-            name: c.name,
-            tag: c.description || 'Curated Special Collection',
-            image: c.image || 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=1200&h=800&fit=crop&q=100&auto=format',
-          })))
+        if (colRes && Array.isArray(colRes) && colRes.length > 0 && isMounted) {
+          setLiveCollections(colRes.map((c: any) => {
+            const staticMatch = collections.find(sc => sc.name.toLowerCase() === c.name?.toLowerCase())
+            return {
+              name: c.name,
+              tag: c.description || staticMatch?.tag || 'Curated Special Collection',
+              image: (c.image && c.image.trim().length > 0) ? c.image : (staticMatch?.image || 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=1200&h=800&fit=crop&q=100&auto=format'),
+            }
+          }))
         }
       } catch (err) {
         console.warn('Backend API connection pending or offline, fallback to store state:', err)
