@@ -4,10 +4,7 @@ import {
   createProductAPI, updateProductAPI, deleteProductAPI,
   fetchCategoriesAPI, createCategoryAPI, updateCategoryAPI, deleteCategoryAPI,
   fetchCollectionsAPI, createCollectionAPI, updateCollectionAPI, deleteCollectionAPI,
-  adjustStockAPI, fetchInventoryLogsAPI,
-  fetchCouponsAPI, createCouponAPI, deleteCouponAPI,
-  fetchReviewsAdminAPI, updateReviewStatusAPI,
-  fetchCMSAPI, updateCMSAPI,
+  adjustStockAPI, createCouponAPI, deleteCouponAPI, updateReviewStatusAPI, updateCMSAPI,
   revalidateStorefront, loginAdminAPI
 } from '../services/api';
 import type {
@@ -688,7 +685,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setInventoryLogs(prev => [log, ...prev]);
 
     try {
-      const mappedType = type === 'Restock' ? 'RESTOCK' : (type === 'Damage/Loss' ? 'DAMAGE' : 'CORRECTION');
+      const mappedType = type === 'Restock' ? 'RESTOCK' : (type === 'Damage' ? 'DAMAGE' : 'CORRECTION');
       await adjustStockAPI({
         productId,
         adjustment,
@@ -767,9 +764,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       await createCouponAPI({
         code: c.code,
-        discountType: c.discountType === 'Percentage' ? 'PERCENTAGE' : 'FIXED_AMOUNT',
-        discountValue: Number(c.discountValue),
-        minOrderValue: c.minPurchase ? Number(c.minPurchase) : 0,
+        discountType: c.type === 'percentage' ? 'PERCENTAGE' : 'FIXED_AMOUNT',
+        discountValue: Number(c.value),
+        minOrderValue: c.minOrderValue ? Number(c.minOrderValue) : 0,
         maxDiscount: c.maxDiscount ? Number(c.maxDiscount) : null,
         usageLimit: c.usageLimit ? Number(c.usageLimit) : null,
       });
