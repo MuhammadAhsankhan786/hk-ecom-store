@@ -128,6 +128,10 @@ export interface Order {
   easypaisaTxnId?: string;
   orderStatus: OrderStatus;
   timeline: OrderTimelineEvent[];
+  advancePaymentAmount?: number;
+  remainingCodAmount?: number;
+  paymentScreenshot?: string;
+  advancePaymentStatus?: 'PENDING' | 'VERIFIED' | 'REJECTED' | 'UNPAID';
   createdAt: string;
 }
 

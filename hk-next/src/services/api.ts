@@ -79,3 +79,26 @@ export async function createOrderAPI(orderData: any) {
 
   return await res.json();
 }
+
+export async function uploadMediaToCloudinaryAPI(file: File, folder = 'advance-receipts') {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('folder', folder);
+
+  const res = await fetch(`${getApiBaseUrl()}/media/upload-receipt`, {
+    method: 'POST',
+    body: formData,
+  });
+
+
+  if (!res.ok) {
+    let errorMessage = `Upload failed with status ${res.status}`;
+    try {
+      const errBody = await res.json();
+      errorMessage = errBody?.message || errorMessage;
+    } catch {}
+    throw new Error(errorMessage);
+  }
+
+  return res.json();
+}

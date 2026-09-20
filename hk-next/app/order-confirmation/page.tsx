@@ -5,41 +5,52 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { getApiBaseUrl } from '../../src/services/api'
 
+interface OrderDetails {
+  id: string
+  orderNumber: string
+  totalAmount: number
+  advancePaymentAmount: number
+  remainingCodAmount: number
+  paymentScreenshot?: string | null
+  advancePaymentStatus?: 'PENDING' | 'VERIFIED' | 'REJECTED'
+  status: string
+  customerName: string
+  customerEmail: string
+  customerPhone: string
+  shippingAddress: string
+  shippingCity: string
+  createdAt: string
+  items: Array<{
+    id: string
+    productName: string
+    quantity: number
+    unitPrice: number
+    totalPrice: number
+  }>
+}
+
 function OrderConfirmationContent() {
   const searchParams = useSearchParams()
-  const queryOrderNumber = searchParams?.get('orderNumber') || 'HK-784920'
+  const queryOrderNumber = searchParams?.get('orderNumber') || ''
   const queryOrderId = searchParams?.get('orderId') || ''
 
-  const [orderNumber, setOrderNumber] = useState(queryOrderNumber)
-  const [orderId, setOrderId] = useState(queryOrderId)
-  const [paymentStatus, setPaymentStatus] = useState<'COMPLETED' | 'PENDING' | 'FAILED'>('PENDING')
-  const [orderStatus, setOrderStatus] = useState<string>('PENDING')
+  const [order, setOrder] = useState<OrderDetails | null>(null)
   const [loading, setLoading] = useState(true)
-  const [retrying, setRetrying] = useState(false)
-  const [retryError, setRetryError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (queryOrderNumber) setOrderNumber(queryOrderNumber)
-    if (queryOrderId) setOrderId(queryOrderId)
-
     const targetId = queryOrderId || queryOrderNumber
     if (targetId) {
-      fetch(`${getApiBaseUrl()}/payments/verify/${targetId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.verified && data.paymentStatus === 'COMPLETED') {
-            setPaymentStatus('COMPLETED')
-            setOrderStatus(data.orderStatus || 'PROCESSING')
-          } else if (data.paymentStatus === 'FAILED' || data.paymentStatus === 'CANCELLED') {
-            setPaymentStatus('FAILED')
-            setOrderStatus(data.orderStatus || 'PENDING')
-          } else {
-            setPaymentStatus('PENDING')
-            setOrderStatus(data.orderStatus || 'PENDING')
-          }
+      fetch(`${getApiBaseUrl()}/orders/${targetId}`)
+        .then((res) => {
+          if (!res.ok) throw new Error('Order not found')
+          return res.json()
         })
-        .catch(() => {
-          setPaymentStatus('PENDING')
+        .then((data) => {
+          setOrder(data)
+        })
+        .catch((err) => {
+          setError(err.message || 'Failed to load order details')
         })
         .finally(() => {
           setLoading(false)
@@ -49,140 +60,145 @@ function OrderConfirmationContent() {
     }
   }, [queryOrderNumber, queryOrderId])
 
-  const handleRetryPayment = async () => {
-    const targetId = orderId || orderNumber
-    if (!targetId) return
-
-    setRetrying(true)
-    setRetryError(null)
-
-    try {
-      const res = await fetch(`${getApiBaseUrl()}/payments/retry/${targetId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gateway: 'PayFast' }),
-      })
-
-      const data = await res.json()
-      if (res.ok && data.postUrl) {
-        if (data.params && Object.keys(data.params).length > 0) {
-          const form = document.createElement('form')
-          form.method = data.httpMethod || 'POST'
-          form.action = data.postUrl
-          Object.keys(data.params).forEach((key) => {
-            const input = document.createElement('input')
-            input.type = 'hidden'
-            input.name = key
-            input.value = String(data.params[key])
-            form.appendChild(input)
-          })
-          document.body.appendChild(form)
-          form.submit()
-        } else {
-          window.location.href = data.postUrl
-        }
-      } else {
-        throw new Error(data.message || 'Failed to initiate payment retry')
-      }
-    } catch (err: any) {
-      setRetryError(err.message || 'Payment retry failed')
-      setRetrying(false)
-    }
-  }
-
   return (
-    <div className="bg-white max-w-xl w-full p-8 lg:p-12 shadow-sm border border-[#E8E5DE] text-center">
+    <div className="bg-white max-w-2xl w-full p-6 sm:p-10 shadow-sm border border-[#E8E5DE] text-center rounded-sm">
       {loading ? (
-        <div className="py-12 flex flex-col items-center justify-center">
-          <svg className="animate-spin text-[#D4AF37] mb-4" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <div className="py-16 flex flex-col items-center justify-center">
+          <svg className="animate-spin text-[#D4AF37] mb-4" width="36" height="36" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10" strokeOpacity=".3" />
             <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
           </svg>
-          <p className="text-sm font-semibold text-[#111111]">Verifying Payment Status Server-Side…</p>
+          <p className="text-sm font-semibold text-[#111111]">Loading Order Confirmation Details…</p>
+        </div>
+      ) : error || !order ? (
+        <div className="py-10">
+          <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M20 6 9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <p className="text-[10px] uppercase tracking-widest font-semibold text-[#D4AF37] mb-2">HK Fabric Store</p>
+          <h1 className="font-serif text-3xl font-medium text-[#111111] mb-2">Order Placed Successfully!</h1>
+          <p className="text-sm text-[#6B6B6B] mb-6">
+            Thank you for shopping with HK Fabric! Order ID: <span className="font-semibold text-[#111111]">{queryOrderNumber || queryOrderId || 'HK Order'}</span>
+          </p>
+          <div className="p-4 bg-[#F8F7F3] rounded text-xs text-left mb-6 space-y-1.5 border border-[#E8E5DE]">
+            <p className="font-semibold text-[#111111] flex items-center gap-1.5">
+              <span>💳 Payment Method:</span> Cash on Delivery + PKR 1,000 Advance Deposit
+            </p>
+            <p className="text-[#6B6B6B]">
+              Our support team is reviewing your deposit receipt screenshot. Once verified, your parcel will be dispatched!
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Link href="/shop" className="btn-gold flex-1 py-3.5 text-[10px] uppercase tracking-widest">
+              Continue Shopping
+            </Link>
+            <Link href="/account" className="btn-dark flex-1 py-3.5 text-[10px] uppercase tracking-widest">
+              View Order History
+            </Link>
+          </div>
         </div>
       ) : (
         <>
-          {/* Status Icon */}
-          {paymentStatus === 'COMPLETED' ? (
-            <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path d="M20 6 9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-          ) : paymentStatus === 'FAILED' ? (
-            <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
-              </svg>
-            </div>
-          ) : (
-            <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-              </svg>
-            </div>
-          )}
+          {/* Header Banner */}
+          <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-5">
+            <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M20 6 9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
 
-          <p className="text-[10px] uppercase tracking-widest font-semibold text-[#D4AF37] mb-2">HK Fabric Order Summary</p>
-          
-          <h1 className="font-serif text-3xl font-500 text-[#111111] mb-2">
-            {paymentStatus === 'COMPLETED' ? 'Order Confirmed!' : paymentStatus === 'FAILED' ? 'Payment Unsuccessful' : 'Order Placed — Awaiting Payment Verification'}
+          <p className="text-[10px] uppercase tracking-widest font-bold text-[#D4AF37] mb-1">HK Fabric Luxury Store</p>
+          <h1 className="font-serif text-3xl font-medium text-[#111111] mb-2">
+            Order #{order.orderNumber} Confirmed!
           </h1>
-          
           <p className="text-sm text-[#6B6B6B] mb-6">
-            {paymentStatus === 'COMPLETED'
-              ? 'Your online payment was verified server-side and your order is now in processing.'
-              : paymentStatus === 'FAILED'
-              ? 'Your online payment was not completed or failed. You can safely retry payment below.'
-              : 'Your order has been recorded. Payment status will update automatically upon gateway confirmation.'}
+            Thank you <span className="font-semibold text-[#111111]">{order.customerName}</span>! We have received your order details and advance payment receipt.
           </p>
 
-          {retryError && (
-            <div className="mb-6 p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs text-left">
-              ⚠️ {retryError}
+          {/* Advance Verification Banner */}
+          <div className={`p-4 mb-6 rounded text-left border text-xs ${
+            order.advancePaymentStatus === 'VERIFIED'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : order.advancePaymentStatus === 'REJECTED'
+              ? 'bg-rose-50 border-rose-200 text-rose-800'
+              : 'bg-amber-50 border-amber-200 text-amber-800'
+          }`}>
+            <div className="flex items-center justify-between font-bold mb-1">
+              <span className="flex items-center gap-1.5">
+                {order.advancePaymentStatus === 'VERIFIED' ? '✅ PKR 1,000 Advance Verified' : order.advancePaymentStatus === 'REJECTED' ? '⚠️ Advance Deposit Receipt Rejected' : '⏳ PKR 1,000 Advance Verification Pending'}
+              </span>
+              <span className="uppercase text-[10px] px-2 py-0.5 rounded font-mono bg-white bg-opacity-70 border border-current">
+                {order.advancePaymentStatus || 'PENDING'}
+              </span>
+            </div>
+            <p className="text-[11px] leading-relaxed opacity-90">
+              {order.advancePaymentStatus === 'VERIFIED'
+                ? 'Your PKR 1,000 advance payment receipt has been verified by our store manager! Your order is currently being packed for dispatch.'
+                : order.advancePaymentStatus === 'REJECTED'
+                ? 'Our team could not verify your receipt screenshot. Please contact customer support via WhatsApp or email with your payment transaction ID.'
+                : 'Our team is reviewing your uploaded Easypaisa / Bank Transfer screenshot. Processing takes 15–30 minutes during business hours.'}
+            </p>
+          </div>
+
+          {/* Financial Breakdown Table */}
+          <div className="bg-[#F8F7F3] p-5 text-left mb-6 border border-[#E8E5DE] space-y-2.5 rounded-sm">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[#111111] border-b border-[#E8E5DE] pb-2 mb-3">
+              Order Payment Breakdown
+            </h3>
+            <div className="flex justify-between text-xs text-[#6B6B6B]">
+              <span>Total Order Value:</span>
+              <span className="font-semibold text-[#111111]">PKR {order.totalAmount.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-xs text-amber-700 bg-amber-50/60 p-2 rounded">
+              <span>Advance Paid (Easypaisa/Bank):</span>
+              <span className="font-bold">PKR {(order.advancePaymentAmount || 1000).toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-xs text-emerald-700 bg-emerald-50/60 p-2 rounded">
+              <span>Remaining COD Amount (Doorstep):</span>
+              <span className="font-bold">PKR {(order.remainingCodAmount || (order.totalAmount - 1000)).toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-xs text-[#6B6B6B] pt-2 border-t border-[#E8E5DE]">
+              <span>Delivery Status:</span>
+              <span className="font-semibold uppercase text-[#D4AF37]">{order.status}</span>
+            </div>
+          </div>
+
+          {/* Purchased Items List */}
+          {order.items && order.items.length > 0 && (
+            <div className="bg-white p-5 text-left mb-8 border border-[#E8E5DE] rounded-sm">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#111111] border-b border-[#E8E5DE] pb-2 mb-3">
+                Items In Order ({order.items.length})
+              </h3>
+              <div className="divide-y divide-[#E8E5DE]">
+                {order.items.map((item) => (
+                  <div key={item.id} className="py-2.5 flex justify-between items-center text-xs">
+                    <div>
+                      <p className="font-semibold text-[#111111]">{item.productName}</p>
+                      <p className="text-[#6B6B6B] text-[11px]">Qty: {item.quantity} × PKR {item.unitPrice.toLocaleString()}</p>
+                    </div>
+                    <p className="font-bold text-[#111111]">PKR {item.totalPrice.toLocaleString()}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
-          {/* Order Details Card */}
-          <div className="bg-[#F8F7F3] p-5 text-left mb-8 space-y-3">
-            <div className="flex justify-between text-xs">
-              <span className="text-[#6B6B6B]">Order Number:</span>
-              <span className="font-semibold text-[#111111]">{orderNumber}</span>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-[#6B6B6B]">Payment Gateway:</span>
-              <span className="font-semibold text-[#111111]">PayFast / Easypaisa Online</span>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-[#6B6B6B]">Server Payment Status:</span>
-              <span className={`font-semibold px-2 py-0.5 ${
-                paymentStatus === 'COMPLETED' ? 'text-emerald-700 bg-emerald-50' : paymentStatus === 'FAILED' ? 'text-rose-700 bg-rose-50' : 'text-amber-700 bg-amber-50'
-              }`}>
-                {paymentStatus}
-              </span>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-[#6B6B6B]">Order Status:</span>
-              <span className="font-semibold text-[#111111]">{orderStatus}</span>
-            </div>
+          {/* Shipping Address */}
+          <div className="bg-[#F8F7F3] p-4 text-left mb-8 border border-[#E8E5DE] text-xs text-[#6B6B6B] space-y-1">
+            <p className="font-bold text-[#111111] uppercase tracking-wider text-[10px] mb-1">Shipping Details</p>
+            <p className="text-[#111111] font-semibold">{order.customerName} ({order.customerPhone})</p>
+            <p>{order.shippingAddress}, {order.shippingCity}</p>
+            <p>{order.customerEmail}</p>
           </div>
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-3">
-            {paymentStatus !== 'COMPLETED' && (
-              <button
-                onClick={handleRetryPayment}
-                disabled={retrying}
-                className="btn-gold flex-1 py-3.5 text-[10px] uppercase tracking-widest cursor-pointer disabled:opacity-50"
-              >
-                {retrying ? 'Initiating Payment Retry…' : '🔄 Retry Online Payment'}
-              </button>
-            )}
-            <Link href="/account" className="btn-dark flex-1 py-3.5 text-[10px] uppercase tracking-widest">
-              View Account Orders
-            </Link>
-            <Link href="/shop" className="btn-ghost flex-1 py-3.5 text-[10px] uppercase tracking-widest">
+            <Link href="/shop" className="btn-gold flex-1 py-3.5 text-[10px] uppercase tracking-widest text-center">
               Continue Shopping
+            </Link>
+            <Link href="/account" className="btn-dark flex-1 py-3.5 text-[10px] uppercase tracking-widest text-center">
+              View Order History
             </Link>
           </div>
         </>
@@ -193,9 +209,9 @@ function OrderConfirmationContent() {
 
 export default function OrderConfirmation() {
   return (
-    <main className="bg-[#F8F7F3] min-h-screen py-16 lg:py-24 flex items-center justify-center px-4">
+    <main className="bg-[#F8F7F3] min-h-screen py-12 lg:py-20 flex items-center justify-center px-4">
       <Suspense fallback={
-        <div className="bg-white max-w-xl w-full p-12 text-center text-sm font-semibold">
+        <div className="bg-white max-w-xl w-full p-12 text-center text-sm font-semibold rounded-sm border border-[#E8E5DE]">
           Loading order details…
         </div>
       }>
@@ -204,3 +220,4 @@ export default function OrderConfirmation() {
     </main>
   )
 }
+

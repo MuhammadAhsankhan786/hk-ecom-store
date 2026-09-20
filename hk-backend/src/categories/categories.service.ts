@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -77,21 +77,32 @@ export class CategoriesService {
     }
 
     const publishedAt = dto.status === CategoryStatus.PUBLISHED ? new Date() : null;
+    const parentId = dto.parentId && dto.parentId.trim() !== '' ? dto.parentId : null;
 
-    const result = await this.prisma.category.create({
-      data: {
-        name: dto.name,
-        slug,
-        description: dto.description,
-        image: dto.image,
-        parentId: dto.parentId,
-        status: dto.status || CategoryStatus.PUBLISHED,
-        publishedAt,
-      },
-    });
+    try {
+      const result = await this.prisma.category.create({
+        data: {
+          name: dto.name,
+          slug,
+          description: dto.description,
+          image: dto.image,
+          parentId,
+          status: dto.status || CategoryStatus.PUBLISHED,
+          publishedAt,
+        },
+      });
 
-    this.clearCache();
-    return result;
+      this.clearCache();
+      return result;
+    } catch (err: any) {
+      if (err?.code === 'P2002') {
+        throw new ConflictException(`Category with name or slug already exists.`);
+      }
+      if (err?.code === 'P2003') {
+        throw new BadRequestException(`Invalid parent category ID provided.`);
+      }
+      throw err;
+    }
   }
 
   async update(id: string, dto: UpdateCategoryDto) {
@@ -106,17 +117,31 @@ export class CategoriesService {
       data.slug = dto.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     }
 
+    if (dto.parentId !== undefined) {
+      data.parentId = (dto.parentId && dto.parentId.trim() !== '' && dto.parentId !== id) ? dto.parentId : null;
+    }
+
     if (dto.status === CategoryStatus.PUBLISHED && !category.publishedAt) {
       data.publishedAt = new Date();
     }
 
-    const result = await this.prisma.category.update({
-      where: { id },
-      data,
-    });
+    try {
+      const result = await this.prisma.category.update({
+        where: { id },
+        data,
+      });
 
-    this.clearCache();
-    return result;
+      this.clearCache();
+      return result;
+    } catch (err: any) {
+      if (err?.code === 'P2002') {
+        throw new ConflictException(`Category with name "${dto.name || category.name}" or slug already exists.`);
+      }
+      if (err?.code === 'P2003') {
+        throw new BadRequestException(`Invalid parent category ID provided.`);
+      }
+      throw err;
+    }
   }
 
   async remove(id: string) {

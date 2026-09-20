@@ -272,7 +272,14 @@ export const CategoryFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = fals
 
               {/* Visual Thumbnail Preview */}
               <div className="relative w-full h-44 rounded-xl overflow-hidden bg-[#F8F7F3] border border-[#E8E5DE]">
-                <img src={image || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format'} alt="Category Preview" className="w-full h-full object-cover" />
+                <img
+                  src={image || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format'}
+                  alt="Category Preview"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format';
+                  }}
+                />
                 <span className="absolute bottom-2 left-2 bg-[#111111]/80 text-white text-[10px] px-2 py-0.5 rounded-md font-bold">
                   Store Preview
                 </span>

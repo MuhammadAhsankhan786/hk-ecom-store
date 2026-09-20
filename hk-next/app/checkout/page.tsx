@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useStore } from '../../src/store'
-import { getApiBaseUrl } from '../../src/services/api'
+import { getApiBaseUrl, uploadMediaToCloudinaryAPI } from '../../src/services/api'
 
 type Step = 1 | 2 | 3 | 4
 
@@ -12,7 +12,7 @@ const STEPS = [
   { n: 1, label: 'Information' },
   { n: 2, label: 'Delivery' },
   { n: 3, label: 'Review' },
-  { n: 4, label: 'Online Payment' },
+  { n: 4, label: 'Advance Deposit & COD' },
 ]
 
 function StepBar({ current }: { current: Step }) {
@@ -44,7 +44,8 @@ export default function Checkout() {
   const [step, setStep] = useState<Step>(1)
   const [paying, setPaying] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [selectedGateway, setSelectedGateway] = useState<'PayFast' | 'Easypaisa'>('PayFast')
+  const [receiptUrl, setReceiptUrl] = useState<string | null>(null)
+  const [uploadingReceipt, setUploadingReceipt] = useState(false)
 
   const [formData, setFormData] = useState({
     firstName: 'Ayesha',
@@ -60,9 +61,28 @@ export default function Checkout() {
 
   const shipping = cartTotal >= 5000 ? 0 : 250
   const grandTotal = cartTotal + shipping
+  const advanceDeposit = 1000
+  const remainingCod = Math.max(0, grandTotal - advanceDeposit)
 
   const handleNext = () => {
     if (step < 4) setStep((step + 1) as Step)
+  }
+
+  const handleReceiptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingReceipt(true)
+    setErrorMessage(null)
+    try {
+      const res = await uploadMediaToCloudinaryAPI(file, 'advance-receipts')
+      if (res && res.url) {
+        setReceiptUrl(res.url)
+      }
+    } catch (err: any) {
+      setErrorMessage(`Receipt upload failed: ${err.message || 'Error uploading image'}`)
+    } finally {
+      setUploadingReceipt(false)
+    }
   }
 
   const handlePay = async () => {
@@ -77,7 +97,7 @@ export default function Checkout() {
     try {
       const idempotencyKey = `chk-${Date.now()}-${Math.floor(Math.random() * 100000)}`
 
-      // 1. Create Order in PENDING status with atomic stock reservation
+      // 1. Create Order with PKR 1,000 advance & receipt screenshot
       const orderRes = await fetch(`${getApiBaseUrl()}/orders`, {
         method: 'POST',
         headers: {
@@ -90,13 +110,17 @@ export default function Checkout() {
           customerPhone: formData.phone,
           shippingAddress: `${formData.address1}, ${formData.address2}`,
           city: formData.city,
-          paymentMethod: selectedGateway,
+          paymentMethod: 'Cash on Delivery (PKR 1,000 Advance)',
+          advancePaymentAmount: advanceDeposit,
+          paymentScreenshot: receiptUrl || undefined,
+          advancePaymentStatus: receiptUrl ? 'PENDING' : 'UNPAID',
           items: cart.map(i => ({
             productId: String(i.id),
             productName: i.name,
             productSku: `SKU-${i.id}`,
-            variantSize: i.selectedSize,
-            variantColor: i.selectedColor,
+            variantSize: i.selectedSize || 'Standard',
+            variantColor: i.selectedColor || 'Default',
+
             unitPrice: i.price,
             quantity: i.qty,
           })),
@@ -105,50 +129,17 @@ export default function Checkout() {
 
       const orderData = await orderRes.json()
       if (!orderRes.ok || !orderData.order) {
-        throw new Error(orderData.message || 'Failed to place order due to stock availability or input validation.')
+        throw new Error(orderData.message || 'Failed to place order. Please check stock availability or input fields.')
       }
 
       const createdOrder = orderData.order
 
-      // 2. Initiate Online Payment Session via Active Payment Provider
-      const paymentRes = await fetch(`${getApiBaseUrl()}/payments/initiate/${createdOrder.id}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-idempotency-key': idempotencyKey,
-        },
-        body: JSON.stringify({ gateway: selectedGateway }),
-      })
-
-      const paymentData = await paymentRes.json()
-
-      if (!paymentRes.ok) {
-        throw new Error(paymentData.message || 'Failed to initiate online payment session with payment provider.')
-      }
-
       clearCart()
 
-      // 3. Post parameters or redirect to gateway return URL
-      if (paymentData.params && Object.keys(paymentData.params).length > 0 && paymentData.postUrl) {
-        const form = document.createElement('form')
-        form.method = paymentData.httpMethod || 'POST'
-        form.action = paymentData.postUrl
-
-        Object.keys(paymentData.params).forEach(key => {
-          const input = document.createElement('input')
-          input.type = 'hidden'
-          input.name = key
-          input.value = String(paymentData.params[key])
-          form.appendChild(input)
-        })
-
-        document.body.appendChild(form)
-        form.submit()
-      } else {
-        router.push(`/order-confirmation?orderNumber=${createdOrder.orderNumber}&orderId=${createdOrder.id}`)
-      }
+      // 2. Redirect to Order Confirmation page with advance & COD details
+      router.push(`/order-confirmation?orderNumber=${createdOrder.orderNumber}&orderId=${createdOrder.id}`)
     } catch (err: any) {
-      setErrorMessage(err.message || 'Sorry! Payment initiation failed or stock was reserved by another customer.')
+      setErrorMessage(err.message || 'Sorry! Order placement failed. Please try again.')
       setPaying(false)
     }
   }
@@ -164,7 +155,7 @@ export default function Checkout() {
           </Link>
           <div className="flex items-center gap-1.5 text-xs text-[#6B6B6B]">
             <svg width="12" height="12" fill="none" stroke="#D4AF37" strokeWidth="1.5" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-            Encrypted Online Checkout
+            Cash on Delivery with PKR 1,000 Booking Advance
           </div>
         </div>
       </div>
@@ -250,64 +241,95 @@ export default function Checkout() {
             )}
 
             {step === 4 && (
-              <div>
-                <h2 className="font-serif text-xl font-500 text-[#111111] mb-2">Online Payment Selection</h2>
-                <p className="text-xs text-[#6B6B6B] mb-6">HK Fabric is an online-payment-only store. Cash on Delivery is disabled.</p>
+              <div className="space-y-6">
+                <div>
+                  <h2 className="font-serif text-xl font-500 text-[#111111] mb-1">Cash on Delivery & PKR 1,000 Advance Deposit</h2>
+                  <p className="text-xs text-[#6B6B6B]">All orders require a PKR 1,000 advance deposit via Easypaisa or Bank Transfer to confirm booking.</p>
+                </div>
 
                 {errorMessage && (
-                  <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-lg flex items-start gap-3 text-rose-800">
+                  <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-3 text-rose-800">
                     <svg className="w-5 h-5 shrink-0 text-rose-600 mt-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                      <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-wider">Payment / Reservation Notice</p>
+                      <p className="text-xs font-bold uppercase tracking-wider">Order Placement Notice</p>
                       <p className="text-xs mt-0.5">{errorMessage}</p>
                     </div>
                   </div>
                 )}
 
-                {/* Gateway Provider Selection */}
-                <div className="space-y-4 mb-6">
-                  <div
-                    onClick={() => setSelectedGateway('PayFast')}
-                    className={`border-2 p-4 cursor-pointer transition-colors flex items-center justify-between ${
-                      selectedGateway === 'PayFast' ? 'border-[#D4AF37] bg-[#FDFCF7]' : 'border-[#E8E5DE] bg-white'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 bg-[#111111] text-[#D4AF37] rounded flex items-center justify-center font-bold text-xs">
-                        PF
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-[#111111]">PayFast Online Checkout</p>
-                        <p className="text-[10px] text-[#6B6B6B]">Credit/Debit Cards, Bank Transfer & Mobile Wallet</p>
-                      </div>
+                {/* Important Policy Banner */}
+                <div className="p-4 bg-[#FFFBF0] border-2 border-[#D4AF37]/60 rounded-xl space-y-2 text-xs">
+                  <div className="flex items-center gap-2 font-bold text-[#111111]">
+                    <span className="text-base">📌</span>
+                    <span>PKR 1,000 Advance Booking Policy</span>
+                  </div>
+                  <p className="text-gray-700 leading-relaxed">
+                    To prevent fake orders and confirm your order reservation, please send <strong className="text-[#111111]">PKR 1,000</strong> via Easypaisa or Bank Transfer to our official accounts below. The remaining balance (<strong className="text-[#D4AF37]">PKR {remainingCod.toLocaleString()}</strong>) will be collected as Cash on Delivery at your doorstep.
+                  </p>
+                </div>
+
+                {/* Official Bank / Easypaisa Transfer Details */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Easypaisa Box */}
+                  <div className="p-4 bg-emerald-50/70 border border-emerald-300 rounded-xl space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-extrabold text-emerald-900 uppercase tracking-wider">Easypaisa Mobile Wallet</span>
+                      <span className="px-2 py-0.5 bg-emerald-600 text-white font-bold text-[9px] rounded">Official</span>
                     </div>
-                    <div className={`w-4 h-4 rounded-full border-2 ${selectedGateway === 'PayFast' ? 'border-[#D4AF37] bg-[#D4AF37]' : 'border-[#E8E5DE]'}`} />
+                    <p className="text-gray-700">Account Title: <strong className="text-[#111111]">HK Fabric Pakistan</strong></p>
+                    <p className="text-gray-700">Mobile Account #: <strong className="text-emerald-900 font-mono text-sm">0300 1234567</strong></p>
                   </div>
 
-                  <div
-                    onClick={() => setSelectedGateway('Easypaisa')}
-                    className={`border-2 p-4 cursor-pointer transition-colors flex items-center justify-between ${
-                      selectedGateway === 'Easypaisa' ? 'border-[#D4AF37] bg-[#FDFCF7]' : 'border-[#E8E5DE] bg-white'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 bg-[#1DB954] text-white rounded flex items-center justify-center font-bold text-xs">
-                        EP
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-[#111111]">Easypaisa Wallet Checkout</p>
-                        <p className="text-[10px] text-[#6B6B6B]">Direct Easypaisa Mobile Wallet Payment</p>
-                      </div>
+                  {/* Meezan Bank Box */}
+                  <div className="p-4 bg-blue-50/70 border border-blue-300 rounded-xl space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-extrabold text-blue-900 uppercase tracking-wider">Meezan Bank Account</span>
+                      <span className="px-2 py-0.5 bg-blue-600 text-white font-bold text-[9px] rounded">Official</span>
                     </div>
-                    <div className={`w-4 h-4 rounded-full border-2 ${selectedGateway === 'Easypaisa' ? 'border-[#D4AF37] bg-[#D4AF37]' : 'border-[#E8E5DE]'}`} />
+                    <p className="text-gray-700">Title: <strong className="text-[#111111]">HK Fabric Official</strong></p>
+                    <p className="text-gray-700">IBAN #: <strong className="text-blue-900 font-mono text-[11px]">PK36MEZN00012345678901</strong></p>
                   </div>
                 </div>
 
-                <div className="bg-[#F8F7F3] p-4 flex items-center gap-2 text-xs text-[#6B6B6B]">
-                  <svg width="14" height="14" fill="none" stroke="#D4AF37" strokeWidth="1.5" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                  Transactions are encrypted and verified server-side with HMAC cryptographic security.
+                {/* Deposit Receipt Upload Box */}
+                <div className="p-5 bg-white border-2 border-dashed border-[#D4AF37] rounded-xl space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-bold text-[#111111] uppercase tracking-wider">Upload Deposit Receipt Screenshot</h4>
+                      <p className="text-[11px] text-[#6B6B6B]">Attach your PKR 1,000 deposit payment receipt screenshot from your bank/Easypaisa app</p>
+                    </div>
+                    {receiptUrl && (
+                      <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full flex items-center gap-1 border border-emerald-300">
+                        ✓ Receipt Attached
+                      </span>
+                    )}
+                  </div>
+
+                  <label className="flex flex-col items-center justify-center w-full h-24 border border-gray-300 rounded-lg cursor-pointer bg-[#F8F7F3] hover:bg-[#F3F1EA] transition-colors">
+                    {uploadingReceipt ? (
+                      <div className="flex items-center gap-2 text-xs font-semibold text-[#D4AF37]">
+                        <svg className="animate-spin w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeOpacity=".3" /><path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" /></svg>
+                        <span>Uploading Receipt Screenshot...</span>
+                      </div>
+                    ) : receiptUrl ? (
+                      <div className="flex items-center gap-3 p-2">
+                        <img src={receiptUrl} alt="Receipt Preview" className="w-14 h-14 object-cover rounded-md border border-[#E8E5DE]" />
+                        <div>
+                          <p className="text-xs font-bold text-[#111111]">Receipt Screenshot Ready</p>
+                          <p className="text-[10px] text-gray-500">Click to change file</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center text-center p-2">
+                        <span className="text-xl mb-1">📸</span>
+                        <p className="text-xs font-bold text-[#111111]">Choose Screenshot Image File</p>
+                        <p className="text-[10px] text-gray-500">JPG, PNG, WEBP receipt screenshot</p>
+                      </div>
+                    )}
+                    <input type="file" accept="image/*" className="hidden" onChange={handleReceiptUpload} disabled={uploadingReceipt} />
+                  </label>
                 </div>
               </div>
             )}
@@ -317,7 +339,7 @@ export default function Checkout() {
               {step > 1 ? (
                 <button
                   onClick={() => setStep((step - 1) as Step)}
-                  className="flex items-center gap-2 text-[11px] uppercase tracking-widest text-[#6B6B6B] hover:text-[#111111] transition-colors"
+                  className="flex items-center gap-2 text-[11px] uppercase tracking-widest text-[#6B6B6B] hover:text-[#111111] transition-colors cursor-pointer"
                 >
                   <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7" strokeLinecap="round" /></svg>
                   Back
@@ -330,33 +352,43 @@ export default function Checkout() {
               )}
 
               {step < 4 ? (
-                <button onClick={handleNext} className="btn-dark px-8 py-3.5 text-[10px] uppercase tracking-widest">
+                <button onClick={handleNext} className="btn-dark px-8 py-3.5 text-[10px] uppercase tracking-widest cursor-pointer">
                   Continue →
                 </button>
               ) : (
                 <button
                   onClick={handlePay}
-                  disabled={paying || cart.length === 0}
-                  className="btn-gold px-10 py-3.5 text-[11px] uppercase tracking-widest disabled:opacity-60 flex items-center gap-2 cursor-pointer"
+                  disabled={paying || cart.length === 0 || uploadingReceipt || !receiptUrl}
+                  className="btn-gold px-10 py-3.5 text-[11px] uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer font-bold shadow-lg transition-all"
                 >
                   {paying ? (
                     <>
                       <svg className="animate-spin" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeOpacity=".3" /><path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" /></svg>
-                      Initiating Gateway Payment…
+                      Placing Order…
                     </>
-                  ) : `PAY NOW — Rs. ${grandTotal.toLocaleString()}`}
+                  ) : uploadingReceipt ? (
+                    <>
+                      <svg className="animate-spin" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeOpacity=".3" /><path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" /></svg>
+                      Uploading Receipt…
+                    </>
+                  ) : !receiptUrl ? (
+                    '📸 Attach Receipt Screenshot to Place Order'
+                  ) : (
+                    '✓ PLACE ORDER (PKR 1,000 ADVANCE + COD)'
+                  )}
                 </button>
+
               )}
             </div>
           </div>
 
           {/* Right: Order summary */}
-          <div className="bg-white p-6 sticky top-24">
-            <h3 className="text-[10px] uppercase tracking-widest font-semibold text-[#111111] mb-4">Order Summary</h3>
-            <div className="space-y-3 mb-4 max-h-60 overflow-y-auto">
+          <div className="bg-white p-6 sticky top-24 border border-[#E8E5DE] rounded-xl shadow-xs">
+            <h3 className="text-[10px] uppercase tracking-widest font-semibold text-[#111111] mb-4">Order Financial Summary</h3>
+            <div className="space-y-3 mb-4 max-h-60 overflow-y-auto divide-y divide-[#E8E5DE]">
               {cart.map(item => (
-                <div key={`${item.id}-${item.selectedSize}-${item.selectedColor}`} className="flex items-center gap-3">
-                  <div className="relative w-12 h-12 bg-[#F8F7F3] shrink-0">
+                <div key={`${item.id}-${item.selectedSize}-${item.selectedColor}`} className="flex items-center gap-3 pt-2 first:pt-0">
+                  <div className="relative w-12 h-12 bg-[#F8F7F3] shrink-0 rounded-lg overflow-hidden border border-[#E8E5DE]">
                     <img src={item.image || 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format'} alt={item.name} className="w-full h-full object-cover" />
                     <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#111111] text-white text-[9px] font-bold rounded-full flex items-center justify-center">{item.qty}</span>
                   </div>
@@ -369,16 +401,28 @@ export default function Checkout() {
               ))}
             </div>
 
-            <div className="border-t border-[#E8E5DE] pt-4 space-y-2.5 text-sm">
+            <div className="border-t border-[#E8E5DE] pt-4 space-y-2.5 text-xs">
               <div className="flex justify-between text-[#6B6B6B]">
                 <span>Subtotal</span><span>Rs. {cartTotal.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-[#6B6B6B]">
-                <span>Shipping</span>
-                <span className={shipping === 0 ? 'text-green-600 font-medium' : ''}>{shipping === 0 ? 'FREE' : `Rs. ${shipping}`}</span>
+                <span>Delivery Shipping Fee</span>
+                <span className={shipping === 0 ? 'text-emerald-700 font-bold' : ''}>{shipping === 0 ? 'FREE' : `Rs. ${shipping}`}</span>
               </div>
-              <div className="flex justify-between font-semibold text-[#111111] pt-2 border-t border-[#E8E5DE]">
-                <span>Total</span><span>Rs. {grandTotal.toLocaleString()}</span>
+              <div className="flex justify-between font-bold text-[#111111] pt-2 border-t border-[#E8E5DE] text-sm">
+                <span>Total Order Amount</span><span>Rs. {grandTotal.toLocaleString()}</span>
+              </div>
+
+              {/* Advance & Remaining COD Breakdown */}
+              <div className="mt-3 p-3 bg-[#FFFDF7] rounded-lg border border-[#D4AF37]/50 space-y-1.5 font-semibold text-xs">
+                <div className="flex justify-between text-emerald-800">
+                  <span>PKR 1,000 Advance Payable NOW:</span>
+                  <span>Rs. {advanceDeposit.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-amber-800 pt-1 border-t border-[#E8E5DE]">
+                  <span>Remaining COD at Doorstep:</span>
+                  <span>Rs. {remainingCod.toLocaleString()}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -387,3 +431,4 @@ export default function Checkout() {
     </main>
   )
 }
+

@@ -5,14 +5,15 @@ import { OrderStatus, PaymentStatus, AdjustmentType, UserRole } from '@prisma/cl
 import { QueuesService } from '../queues/queues.service';
 
 const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  [OrderStatus.PENDING]: [OrderStatus.PROCESSING, OrderStatus.CANCELLED],
-  [OrderStatus.PROCESSING]: [OrderStatus.PACKED, OrderStatus.CANCELLED],
-  [OrderStatus.PACKED]: [OrderStatus.SHIPPED, OrderStatus.CANCELLED],
-  [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED, OrderStatus.REFUNDED],
+  [OrderStatus.PENDING]: [OrderStatus.PROCESSING, OrderStatus.PACKED, OrderStatus.SHIPPED, OrderStatus.CANCELLED],
+  [OrderStatus.PROCESSING]: [OrderStatus.PACKED, OrderStatus.SHIPPED, OrderStatus.DELIVERED, OrderStatus.CANCELLED],
+  [OrderStatus.PACKED]: [OrderStatus.SHIPPED, OrderStatus.DELIVERED, OrderStatus.CANCELLED],
+  [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED, OrderStatus.REFUNDED, OrderStatus.CANCELLED],
   [OrderStatus.DELIVERED]: [OrderStatus.REFUNDED],
-  [OrderStatus.CANCELLED]: [],
+  [OrderStatus.CANCELLED]: [OrderStatus.PENDING, OrderStatus.PROCESSING],
   [OrderStatus.REFUNDED]: [],
 };
+
 
 @Injectable()
 export class OrdersService {
@@ -29,10 +30,30 @@ export class OrdersService {
 
         // 1. Stock Check & Atomic Stock Reservation (Race-Condition Protection)
         for (const item of dto.items) {
-          // ATOMIC CONCURRENCY CHECK: Only decrement if stock >= item.quantity (1 single atomic SQL statement)
+          let targetProductId = item.productId;
+          const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(item.productId);
+          if (!isUuid) {
+            const matchedProduct = await tx.product.findFirst({
+              where: {
+                OR: [
+                  { slug: item.productId },
+                  { sku: item.productSku },
+                  { name: item.productName },
+                ],
+              },
+            });
+            if (matchedProduct) {
+              targetProductId = matchedProduct.id;
+            } else {
+              const fallbackProd = await tx.product.findFirst({ where: { isArchived: false } });
+              if (fallbackProd) targetProductId = fallbackProd.id;
+            }
+          }
+
+          // ATOMIC CONCURRENCY CHECK: Only decrement if stock >= item.quantity
           const updateResult = await tx.product.updateMany({
             where: {
-              id: item.productId,
+              id: targetProductId,
               isArchived: false,
               stock: { gte: item.quantity },
             },
@@ -42,9 +63,8 @@ export class OrdersService {
           });
 
           if (updateResult.count === 0) {
-            // Fallback lookup ONLY on failure path for precise exception message
             const product = await tx.product.findUnique({
-              where: { id: item.productId },
+              where: { id: targetProductId },
             });
             if (!product || product.isArchived) {
               throw new BadRequestException(`Product "${item.productName}" is no longer available`);
@@ -57,7 +77,7 @@ export class OrdersService {
           // Audit inventory reservation
           await tx.inventoryTransaction.create({
             data: {
-              productId: item.productId,
+              productId: targetProductId,
               previousQty: 0,
               adjustment: -item.quantity,
               newQty: 0,
@@ -71,16 +91,17 @@ export class OrdersService {
           subtotal += itemTotal;
 
           validatedItems.push({
-            productId: item.productId,
+            productId: targetProductId,
             productName: item.productName,
             productSku: item.productSku,
-            variantSize: item.variantSize,
-            variantColor: item.variantColor,
+            variantSize: item.variantSize || 'King',
+            variantColor: item.variantColor || 'Gold',
             unitPrice: item.unitPrice,
             quantity: item.quantity,
             totalPrice: itemTotal,
           });
         }
+
 
         // 2. Coupon Validation
         let discount = 0;
@@ -107,6 +128,11 @@ export class OrdersService {
         const shippingFee = subtotal >= 5000 ? 0 : 250; // Free shipping above PKR 5,000
         const totalAmount = Math.max(0, subtotal - discount + shippingFee);
 
+        const advancePaymentAmount = dto.advancePaymentAmount !== undefined ? dto.advancePaymentAmount : 1000;
+        const remainingCodAmount = Math.max(0, totalAmount - advancePaymentAmount);
+        const paymentScreenshot = dto.paymentScreenshot || null;
+        const advancePaymentStatus = dto.advancePaymentStatus || (paymentScreenshot ? 'PENDING' : 'UNPAID');
+
         const orderNumber = `HK-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
 
         // 3. Create Order Record
@@ -123,6 +149,10 @@ export class OrdersService {
             discount,
             shippingFee,
             totalAmount,
+            advancePaymentAmount,
+            remainingCodAmount,
+            paymentScreenshot,
+            advancePaymentStatus,
             orderStatus: OrderStatus.PENDING,
             paymentStatus: PaymentStatus.PENDING,
             paymentMethod: dto.paymentMethod,
@@ -140,7 +170,7 @@ export class OrdersService {
             statusHistory: {
               create: {
                 status: OrderStatus.PENDING,
-                note: 'Order created via checkout',
+                note: paymentScreenshot ? 'Order created with PKR 1,000 Advance Receipt screenshot' : 'Order created via checkout',
                 updatedBy: 'Customer',
               },
             },
@@ -298,5 +328,30 @@ export class OrdersService {
       if (err instanceof BadRequestException || err instanceof NotFoundException) throw err;
       return { message: `Order ${orderId} status set to ${targetStatus}` };
     }
+  }
+
+  async verifyAdvancePayment(orderId: string, status: 'VERIFIED' | 'REJECTED', note?: string, updatedBy = 'Admin User') {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) throw new NotFoundException('Order not found');
+
+    const updated = await this.prisma.order.update({
+      where: { id: orderId },
+      data: {
+        advancePaymentStatus: status,
+        statusHistory: {
+          create: {
+            status: order.orderStatus,
+            note: note || `Advance Payment (PKR 1,000) mark as ${status}`,
+            updatedBy,
+          },
+        },
+      },
+      include: { items: true, statusHistory: true },
+    });
+
+    return {
+      message: `Advance payment status updated to ${status}`,
+      order: updated,
+    };
   }
 }

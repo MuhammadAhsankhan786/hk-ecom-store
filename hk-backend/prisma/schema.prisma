@@ -276,8 +276,12 @@ model Order {
   orderStatus     OrderStatus   @default(PENDING)
   paymentStatus   PaymentStatus @default(PENDING)
   paymentMethod   String
-  trackingNumber  String?
-  notes           String?
+  trackingNumber          String?
+  notes                   String?
+  advancePaymentAmount    Float         @default(1000)
+  remainingCodAmount      Float         @default(0)
+  paymentScreenshot       String?
+  advancePaymentStatus    String        @default("PENDING")
 
   items          OrderItem[]
   payments       Payment[]

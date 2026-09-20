@@ -41,6 +41,18 @@ export class MediaController {
     return this.mediaService.uploadImageWithMulter(file, folder || 'products');
   }
 
+  @Post('upload-receipt')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Public endpoint to upload customer payment receipt screenshot to Cloudinary' })
+  uploadReceipt(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('folder') folder?: string,
+  ) {
+    return this.mediaService.uploadImageWithMulter(file, folder || 'advance-receipts');
+  }
+
+
   @Get('signature')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.STORE_MANAGER)

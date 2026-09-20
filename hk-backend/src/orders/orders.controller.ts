@@ -66,4 +66,19 @@ export class OrdersController {
     const updatedBy = user?.name || user?.email || 'Admin User';
     return this.ordersService.updateStatus(id, status, note, updatedBy);
   }
+
+  @Patch(':id/verify-advance')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.STORE_MANAGER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Verify or reject PKR 1,000 advance payment receipt (Admin)' })
+  verifyAdvance(
+    @Param('id') id: string,
+    @Body('status') status: 'VERIFIED' | 'REJECTED',
+    @Body('note') note?: string,
+    @CurrentUser() user?: any,
+  ) {
+    const updatedBy = user?.name || user?.email || 'Admin User';
+    return this.ordersService.verifyAdvancePayment(id, status, note, updatedBy);
+  }
 }

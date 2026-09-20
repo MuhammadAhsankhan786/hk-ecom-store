@@ -10,40 +10,49 @@ import { fetchProductsFromAPI, fetchCategoriesFromAPI, fetchCollectionsFromAPI }
 
 const heroSlides = [
   {
-    tag: 'Royal Pakistani Bridal Collection',
-    title: 'Ruby Red & Gold Heavy Bridal Bedding Set',
-    subtitle: 'Make your wedding trousseau unforgettable with our 10-piece embroidered Ruby Red velvet bridal set crafted with gold zari embroidery.',
-    ctaPrimary: 'Shop Red Bridal Set',
-    ctaSecondary: 'View Collections',
-    image: 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=2400&q=100&fit=crop&auto=format',
-    link: '/product/ruby-red-bridal-set',
-  },
-  {
-    tag: 'Royal Jacquard Weaves',
-    title: 'Emerald Green & Gold Luxury Bedding',
-    subtitle: 'Transform your master bedroom with our 400TC Egyptian cotton satin bedsheet set featuring rich emerald & gold weaves.',
-    ctaPrimary: 'Shop Emerald Set',
+    tag: 'Luxury Floral Embroidery',
+    title: 'Classic Cream & Gold Hand-Embroidered Bedding',
+    subtitle: 'Comfort in Every Thread — Indulge in premium Egyptian cotton featuring intricate floral embroidery and luxury matching pillowcases.',
+    ctaPrimary: 'Shop Embroidered Set',
     ctaSecondary: 'View Bedsheets',
-    image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=2400&q=100&fit=crop&auto=format',
-    link: '/shop?category=Bedsheets',
+    image: '/images/hero/hero-slide-1.jpg',
+    link: '/shop?category=Embroidery%20Bedsheets',
   },
   {
-    tag: 'Deep Velvet Elegance',
-    title: 'Sapphire Royal Blue Velvet Duvet Set',
-    subtitle: 'Indulge in nightlong softness with our high-loft down-alternative microgel duvet enveloped in sapphire blue velvet.',
-    ctaPrimary: 'Shop Sapphire Blue',
-    ctaSecondary: 'View Comforters',
-    image: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=2400&q=100&fit=crop&auto=format',
-    link: '/shop?category=Comforters',
+    tag: 'Royal Pakistani Bridal Collection',
+    title: 'Elegance for a Lifetime — Heavy Velvet Bridal Trousseau',
+    subtitle: 'Make your wedding trousseau royal with our embroidered cream & maroon velvet 10-piece bridal set crafted with gold zari embroidery.',
+    ctaPrimary: 'Shop Royal Bridal Set',
+    ctaSecondary: 'View Bridal Collections',
+    image: '/images/hero/hero-slide-2.jpg',
+    link: '/shop?category=Comforter%20Set%20Bridal%209%20Pieces',
   },
   {
-    tag: 'Winter Warmth Collection',
-    title: 'Terracotta Gold Heavy Plush Blanket Set',
-    subtitle: 'Stay warm through cold winter nights with ultra-soft double-ply Korean mink blankets in rich warm terracotta gold.',
-    ctaPrimary: 'Shop Terracotta Blanket',
+    tag: 'Grand Bridal Series',
+    title: 'For Your Most Beautiful Beginning — Gold & Crimson Set',
+    subtitle: 'Experience unmatched grandeur with rich crimson velvet trim, intricate gold floral motifs, and royal satin pillow shams.',
+    ctaPrimary: 'Shop Crimson Bridal',
+    ctaSecondary: 'View Bedcovers',
+    image: '/images/hero/hero-slide-3.jpg',
+    link: '/shop?category=Bridal%20Bedcover%208%20Pieces%20Set',
+  },
+  {
+    tag: 'Summer Cotton Collection',
+    title: 'Light. Breathable. Beautiful. For Brighter, Cooler Days.',
+    subtitle: 'Stay cool through warm summer nights with 100% pure combed cotton bedsheets adorned with soft sage green botanical prints.',
+    ctaPrimary: 'Shop Summer Cotton',
+    ctaSecondary: 'View Cotton Sheets',
+    image: '/images/hero/hero-slide-4.jpg',
+    link: '/shop?category=Cotton%20Bedsheets',
+  },
+  {
+    tag: 'Winter Mink Collection',
+    title: 'Warmer. Cozier. Happier Together — Charcoal Plush Mink',
+    subtitle: 'Wrap yourself in ultimate winter warmth with our heavy double-ply plush mink blanket set featuring embossed botanical leaves.',
+    ctaPrimary: 'Shop Winter Mink',
     ctaSecondary: 'View Blankets',
-    image: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=2400&q=100&fit=crop&auto=format',
-    link: '/shop?category=Blankets',
+    image: '/images/hero/hero-slide-5.jpg',
+    link: '/shop?category=Fleece%20Summer%20Blankets',
   },
 ]
 
@@ -512,72 +521,34 @@ export default function Home() {
             </div>
           ))}
 
-          {/* Hero Main Content & Overlaid Category Cards Container */}
-          <div className="relative z-20 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 w-full py-10 lg:py-14">
+          {/* Hero Main Content Container */}
+          <div className="relative z-20 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 w-full py-16 lg:py-24">
             {/* Top Text & Heading */}
-            <div className="max-w-2xl text-white mb-6 lg:mb-8">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#D4AF37] mb-3 font-semibold backdrop-blur-xs">
+            <div className="max-w-3xl text-white">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#D4AF37] mb-4 font-semibold backdrop-blur-xs">
                 <span>✨ HK FABRIC PAKISTAN</span>
                 <span className="w-1 h-1 rounded-full bg-[#D4AF37]" />
                 <span>OFFICIAL STORE</span>
               </div>
-              <h1 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-500 text-white leading-tight mb-2 drop-shadow-lg">
+              <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl font-500 text-white leading-[1.15] mb-4 drop-shadow-lg">
                 {heroSlides[currentSlide].title}
               </h1>
-              <p className="text-white/85 text-xs sm:text-sm leading-relaxed max-w-xl">
+              <p className="text-white/90 text-sm sm:text-base leading-relaxed max-w-2xl mb-8 drop-shadow-md">
                 {heroSlides[currentSlide].subtitle}
               </p>
-            </div>
-
-            {/* OVERLAID CATEGORY CARDS GRID (User's Core Requirement) */}
-            <div className="bg-black/50 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-white/20 shadow-2xl">
-              <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-2.5">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-ping" />
-                  <h3 className="text-xs sm:text-sm font-bold uppercase tracking-widest text-white">
-                    Explore Bedding Varieties at a Glance
-                  </h3>
-                </div>
-                <Link href="/shop" className="text-[10px] sm:text-xs text-[#D4AF37] hover:text-white font-semibold uppercase tracking-wider transition-colors">
-                  View Full Shop ({liveProducts.length} Items) →
+              <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+                <Link
+                  href={heroSlides[currentSlide].link}
+                  className="btn-gold px-7 sm:px-9 py-3.5 sm:py-4 text-xs tracking-widest uppercase rounded-xl font-bold shadow-xl hover:scale-103 transition-transform"
+                >
+                  {heroSlides[currentSlide].ctaPrimary} →
                 </Link>
-              </div>
-
-              {/* Colorful Category Cards Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 sm:gap-3.5">
-                {[
-                  { name: 'Cotton Bedsheets', tag: 'Single, Double & Export', color: 'bg-emerald-500/25 text-emerald-300 border-emerald-500/40', bg: 'from-emerald-950/80 to-black/80', img: 'https://images.unsplash.com/photo-1685122121697-f4515ea401b0?w=400&q=80&fit=crop' },
-                  { name: 'Comforter Set Bridal 9 Pieces', tag: 'Royal 9-Piece Velvet', color: 'bg-rose-500/25 text-rose-300 border-rose-500/40', bg: 'from-rose-950/80 to-black/80', img: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400&q=80&fit=crop' },
-                  { name: 'Fleece Summer Blankets', tag: 'Single & Double Fleece', color: 'bg-amber-500/25 text-amber-300 border-amber-500/40', bg: 'from-amber-950/80 to-black/80', img: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=400&q=80&fit=crop' },
-                  { name: 'Bridal Bedcover 8 Pieces Set', tag: 'Luxury Embroidered', color: 'bg-purple-500/25 text-purple-300 border-purple-500/40', bg: 'from-purple-950/80 to-black/80', img: 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=400&q=80&fit=crop' },
-                  { name: 'Cotton Comforter & Comforter Sets', tag: '6-Pcs & 4-Pcs Sets', color: 'bg-sky-500/25 text-sky-300 border-sky-500/40', bg: 'from-sky-950/80 to-black/80', img: 'https://images.unsplash.com/photo-1614226114676-8e02ac5f4763?w=400&q=80&fit=crop' },
-                  { name: 'Velvet Bedsheets', tag: 'Plush Winter Velvet', color: 'bg-[#D4AF37]/25 text-[#D4AF37] border-[#D4AF37]/40', bg: 'from-yellow-950/80 to-black/80', img: 'https://images.unsplash.com/photo-1623944436679-5412c658a358?w=400&q=80&fit=crop' },
-                ].map((cat, idx) => (
-                  <Link
-                    key={idx}
-                    href={`/shop?category=${encodeURIComponent(cat.name)}`}
-                    className="group relative overflow-hidden rounded-xl border border-white/20 hover:border-[#D4AF37] transition-all duration-300 hover:scale-103 shadow-lg block"
-                  >
-                    <div className="aspect-[4/3] relative overflow-hidden bg-black/60">
-                      <img
-                        src={cat.img}
-                        alt={cat.name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-75 group-hover:opacity-90"
-                      />
-                      <div className={`absolute inset-0 bg-gradient-to-t ${cat.bg}`} />
-                    </div>
-                    <div className="absolute inset-0 p-2 sm:p-2.5 flex flex-col justify-between z-10">
-                      <span className={`self-start text-[7.5px] sm:text-[8px] uppercase tracking-widest font-extrabold px-1.5 py-0.5 rounded border ${cat.color} backdrop-blur-xs`}>
-                        {cat.tag}
-                      </span>
-                      <div>
-                        <h4 className="font-serif text-[11px] sm:text-xs font-bold text-white leading-tight group-hover:text-[#D4AF37] transition-colors drop-shadow-sm line-clamp-2">
-                          {cat.name}
-                        </h4>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+                <Link
+                  href="/shop"
+                  className="px-7 sm:px-9 py-3.5 sm:py-4 text-xs tracking-widest uppercase rounded-xl font-bold bg-white/10 hover:bg-white/20 text-white border border-white/30 backdrop-blur-md transition-colors"
+                >
+                  {heroSlides[currentSlide].ctaSecondary}
+                </Link>
               </div>
             </div>
           </div>

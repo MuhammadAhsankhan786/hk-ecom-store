@@ -18,13 +18,16 @@ export class OrderItemDto {
   @IsNotEmpty()
   productSku: string;
 
-  @ApiProperty({ example: 'King' })
+  @ApiProperty({ example: 'King', required: false })
+  @IsOptional()
   @IsString()
-  variantSize: string;
+  variantSize?: string;
 
-  @ApiProperty({ example: 'Deep Maroon' })
+  @ApiProperty({ example: 'Deep Maroon', required: false })
+  @IsOptional()
   @IsString()
-  variantColor: string;
+  variantColor?: string;
+
 
   @ApiProperty({ example: 6999 })
   @IsNumber()
@@ -80,4 +83,19 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiProperty({ example: 1000, required: false })
+  @IsOptional()
+  @IsNumber()
+  advancePaymentAmount?: number;
+
+  @ApiProperty({ example: 'https://res.cloudinary.com/demo/image/upload/v123/receipt.jpg', required: false })
+  @IsOptional()
+  @IsString()
+  paymentScreenshot?: string;
+
+  @ApiProperty({ example: 'PENDING', required: false })
+  @IsOptional()
+  @IsString()
+  advancePaymentStatus?: string;
 }

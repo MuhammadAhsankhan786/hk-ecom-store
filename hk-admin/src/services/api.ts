@@ -214,6 +214,13 @@ export async function updateOrderStatusAPI(id: string, status: string, note?: st
   });
 }
 
+export async function verifyAdvancePaymentAPI(id: string, status: 'VERIFIED' | 'REJECTED', note?: string) {
+  return apiRequest(`/orders/${id}/verify-advance`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status, note }),
+  });
+}
+
 // ─── INVENTORY ───────────────────────────────────────────────────────────────
 
 export async function adjustStockAPI(payload: {

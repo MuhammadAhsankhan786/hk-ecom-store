@@ -197,7 +197,20 @@ export const ProductFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = false
   const [categoryId, setCategoryId] = useState(
     (existing as any)?.categoryId || categories[0]?.id || ''
   );
-  const [collection, setCollection] = useState(existing?.collection || collections[0]?.name || 'Wedding Collection');
+  const [collection, setCollection] = useState(existing?.collection || collections[0]?.name || 'Royal Bridal Collection');
+
+  // Auto-sync category and collection when categories/collections load or change
+  React.useEffect(() => {
+    if (!categoryId && categories.length > 0) {
+      setCategoryId(categories[0].id);
+    }
+  }, [categories, categoryId]);
+
+  React.useEffect(() => {
+    if (collections.length > 0 && (!collection || !collections.some(c => c.name === collection))) {
+      setCollection(collections[0].name);
+    }
+  }, [collections, collection]);
   const [price, setPrice] = useState(existing?.price || 15000);
   const [salePrice, setSalePrice] = useState<number | undefined>(existing?.salePrice);
   const [costPrice, setCostPrice] = useState<number | undefined>(existing?.costPrice);
@@ -402,14 +415,15 @@ export const ProductFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = false
                 <select
                   value={categoryId}
                   onChange={e => setCategoryId(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-[#E8E5DE] rounded-lg bg-[#F8F7F3]"
+                  className="w-full px-3 py-2 text-xs border border-[#E8E5DE] rounded-lg bg-[#F8F7F3] cursor-pointer"
                 >
-                  {categories.length === 0 && (
-                    <option value="">No categories — add one first</option>
+                  {categories.length === 0 ? (
+                    <option value="">Select Category...</option>
+                  ) : (
+                    categories.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))
                   )}
-                  {categories.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
                 </select>
               </div>
 
@@ -418,13 +432,22 @@ export const ProductFormPage: React.FC<{ isEdit?: boolean }> = ({ isEdit = false
                 <select
                   value={collection}
                   onChange={e => setCollection(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-[#E8E5DE] rounded-lg bg-[#F8F7F3]"
+                  className="w-full px-3 py-2 text-xs border border-[#E8E5DE] rounded-lg bg-[#F8F7F3] cursor-pointer"
                 >
-                  {collections.map(col => (
-                    <option key={col.id} value={col.name}>{col.name}</option>
-                  ))}
+                  {collections.length === 0 ? (
+                    <>
+                      <option value="Royal Bridal Collection">Royal Bridal Collection</option>
+                      <option value="Summer Cotton Collection">Summer Cotton Collection</option>
+                      <option value="Winter Mink Collection">Winter Mink Collection</option>
+                    </>
+                  ) : (
+                    collections.map(col => (
+                      <option key={col.id} value={col.name}>{col.name}</option>
+                    ))
+                  )}
                 </select>
               </div>
+
             </div>
           </div>
 

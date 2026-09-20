@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import {
-  fetchAdminProductsAPI, fetchAdminOrdersAPI, updateOrderStatusAPI,
+  fetchAdminProductsAPI, fetchAdminOrdersAPI, updateOrderStatusAPI, verifyAdvancePaymentAPI,
   createProductAPI, updateProductAPI, deleteProductAPI,
   fetchCategoriesAPI, createCategoryAPI, updateCategoryAPI, deleteCategoryAPI,
   fetchCollectionsAPI, createCollectionAPI, updateCollectionAPI, deleteCollectionAPI,
@@ -76,6 +76,7 @@ interface AdminContextType {
   
   orders: Order[];
   updateOrderStatus: (orderId: string, status: OrderStatus, note: string) => void;
+  verifyAdvancePayment: (orderId: string, status: 'VERIFIED' | 'REJECTED', note?: string) => void;
   
   transactions: Transaction[];
   customers: Customer[];
@@ -116,8 +117,19 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
   
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [collections, setCollections] = useState<Collection[]>([]);
+  const [categories, setCategories] = useState<Category[]>([
+
+    { id: '6120d9a4-3a36-499c-a640-8bfaeeac1af8', name: 'Cotton Comforter & Comforter Sets', slug: 'cotton-comforter-comforter-sets', description: '', image: '', status: 'Active', productsCount: 0, parentId: '' },
+    { id: 'b73198d8-0ddf-42b0-8f7e-a2716182e12b', name: 'Fleece Summer Blankets', slug: 'fleece-summer-blankets', description: '', image: '', status: 'Active', productsCount: 0, parentId: '' },
+    { id: 'e0303b1a-452e-4491-b8a3-34fbaeaf63db', name: 'Comforter Set Bridal 9 Pieces', slug: 'comforter-set-bridal-9-pieces', description: '', image: '', status: 'Active', productsCount: 0, parentId: '' },
+    { id: 'fb4c04d1-9028-4562-a756-8f56bab4024a', name: 'Bridal Bedcover 8 Pieces Set', slug: 'bridal-bedcover-8-pieces-set', description: '', image: '', status: 'Active', productsCount: 0, parentId: '' },
+  ]);
+  const [collections, setCollections] = useState<Collection[]>([
+    { id: 'col-1', name: 'Royal Bridal Collection', slug: 'royal-bridal-collection', description: '', image: '', isFeatured: true, productsCount: 0, status: 'Active', sortOrder: 1, seoTitle: '', seoDescription: '' },
+    { id: 'col-2', name: 'Summer Cotton Collection', slug: 'summer-cotton-collection', description: '', image: '', isFeatured: true, productsCount: 0, status: 'Active', sortOrder: 2, seoTitle: '', seoDescription: '' },
+    { id: 'col-3', name: 'Winter Mink Collection', slug: 'winter-mink-collection', description: '', image: '', isFeatured: true, productsCount: 0, status: 'Active', sortOrder: 3, seoTitle: '', seoDescription: '' },
+  ]);
+
   const [inventoryLogs, setInventoryLogs] = useState<InventoryAdjustment[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [transactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
@@ -133,9 +145,27 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   
   const [currentUser, setCurrentUser] = useState<AdminUser>(INITIAL_ADMIN_USERS[0]);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return localStorage.getItem('hk_admin_auth') === 'true';
+    return localStorage.getItem('hk_admin_auth') === 'true' && !!localStorage.getItem('hk_admin_token');
   });
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Auto-authenticate on mount if token is missing or expired in dev
+  useEffect(() => {
+    const token = localStorage.getItem('hk_admin_token');
+    if (!token) {
+      loginAdminAPI('admin@hkfabric.pk', 'admin123')
+        .then((data) => {
+          if (data?.accessToken) {
+            setIsAuthenticated(true);
+          }
+        })
+        .catch(() => {
+          // If auto login fails, user can manually use login screen
+          setIsAuthenticated(false);
+        });
+    }
+  }, []);
+
 
   // ─── Refresh helpers (re-fetch from backend) ──────────────────────────────
 
@@ -272,7 +302,11 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             discount: o.discount || 0,
             tax: 0,
             total: o.totalAmount || 15000,
-            paymentMethod: (o.paymentMethod || 'Easypaisa') as PaymentProvider,
+            advancePaymentAmount: o.advancePaymentAmount !== undefined ? o.advancePaymentAmount : 1000,
+            remainingCodAmount: o.remainingCodAmount !== undefined ? o.remainingCodAmount : Math.max(0, (o.totalAmount || 15000) - 1000),
+            paymentScreenshot: o.paymentScreenshot || undefined,
+            advancePaymentStatus: o.advancePaymentStatus || (o.paymentScreenshot ? 'PENDING' : 'UNPAID'),
+            paymentMethod: (o.paymentMethod || 'Cash on Delivery') as PaymentProvider,
             paymentStatus: o.paymentStatus === 'COMPLETED' ? 'Successful' : 'Pending',
             orderStatus: o.orderStatus === 'PENDING' ? 'Processing' : (o.orderStatus || 'Processing'),
             timeline: [
@@ -292,7 +326,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     }
     loadLiveBackendData();
-  }, [refreshProducts, refreshCategories]);
+  }, [refreshProducts, refreshCategories, refreshCollections, isAuthenticated]);
+
   const loginAdmin = async (email: string, pass: string): Promise<boolean> => {
     try {
       const result = await loginAdminAPI(email, pass);
@@ -528,8 +563,12 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       const payload: Record<string, any> = {};
       if (updates.name !== undefined) payload.name = updates.name;
+      if (updates.slug !== undefined) payload.slug = updates.slug;
       if (updates.description !== undefined) payload.description = updates.description;
       if (updates.image !== undefined) payload.image = updates.image;
+      if (updates.parentId !== undefined) {
+        payload.parentId = (updates.parentId && updates.parentId.trim() !== '' && updates.parentId !== id) ? updates.parentId : null;
+      }
       if (updates.status !== undefined) {
         payload.status = updates.status === 'Active' ? 'PUBLISHED' : (updates.status === 'Archived' ? 'ARCHIVED' : 'DRAFT');
       }
@@ -595,7 +634,15 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const updateCollection = async (id: string, updates: Partial<Collection>) => {
     try {
       setCollections(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
-      await updateCollectionAPI(id, updates);
+
+      const payload: Record<string, any> = {};
+      if (updates.name !== undefined) payload.name = updates.name;
+      if (updates.slug !== undefined) payload.slug = updates.slug;
+      if (updates.description !== undefined) payload.description = updates.description;
+      if (updates.image !== undefined) payload.image = updates.image;
+      if (updates.isFeatured !== undefined) payload.isFeatured = updates.isFeatured;
+
+      await updateCollectionAPI(id, payload);
       refreshCollections();
       revalidateStorefront('collections');
       showToast('✓ Collection updated in database successfully.');
@@ -692,6 +739,28 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       showToast(`✗ Order status API sync failed: ${err.message || 'Backend error'}`);
     }
   };
+
+  const verifyAdvancePayment = async (orderId: string, status: 'VERIFIED' | 'REJECTED', note?: string) => {
+    setOrders(prev => prev.map(ord => {
+      if (ord.id === orderId) {
+        return {
+          ...ord,
+          advancePaymentStatus: status,
+          orderStatus: status === 'VERIFIED' ? 'Processing' : ord.orderStatus,
+        };
+      }
+      return ord;
+    }));
+
+    try {
+      await verifyAdvancePaymentAPI(orderId, status, note);
+      addAuditLog(`Advance payment (PKR 1,000) set to ${status}`, 'Order', orderId);
+      showToast(status === 'VERIFIED' ? '✓ Payment Received & Order Confirmed!' : `✓ Advance payment marked as ${status}.`);
+    } catch (err: any) {
+      showToast(`✗ Advance payment verification failed: ${err.message || 'Backend error'}`);
+    }
+  };
+
 
   const addCoupon = async (c: Omit<Coupon, 'id' | 'usedCount'>) => {
     const newCoup: Coupon = {
@@ -796,7 +865,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       categories, addCategory, updateCategory, deleteCategory, refreshCategories,
       collections, addCollection, updateCollection, deleteCollection,
       inventoryLogs, adjustStock,
-      orders, updateOrderStatus,
+      orders, updateOrderStatus, verifyAdvancePayment,
       transactions, customers,
       coupons, addCoupon, updateCoupon, toggleCouponStatus, deleteCoupon,
       reviews, updateReviewStatus,

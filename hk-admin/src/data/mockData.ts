@@ -487,11 +487,47 @@ export const INITIAL_CMS: HomepageCMS = {
   heroBanners: [
     {
       id: 'hb-1',
-      image: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=1600&h=800&fit=crop&auto=format',
-      heading: 'Royal Pakistani Bridal Bedding 2026',
-      description: 'Handcrafted embroidered velvet & satin silk 10-piece bridal bed sets for grand weddings.',
-      ctaText: 'Explore Wedding Collection',
-      ctaLink: '/shop?category=bedsheets',
+      image: '/images/hero/hero-slide-1.jpg',
+      heading: 'Classic Cream & Gold Hand-Embroidered Bedding',
+      description: 'Comfort in Every Thread — Indulge in premium Egyptian cotton featuring intricate floral embroidery and luxury matching pillowcases.',
+      ctaText: 'Shop Embroidered Set',
+      ctaLink: '/shop?category=Embroidery%20Bedsheets',
+      isActive: true
+    },
+    {
+      id: 'hb-2',
+      image: '/images/hero/hero-slide-2.jpg',
+      heading: 'Elegance for a Lifetime — Heavy Velvet Bridal Trousseau',
+      description: 'Make your wedding trousseau royal with our embroidered cream & maroon velvet 10-piece bridal set crafted with gold zari embroidery.',
+      ctaText: 'Shop Royal Bridal Set',
+      ctaLink: '/shop?category=Comforter%20Set%20Bridal%209%20Pieces',
+      isActive: true
+    },
+    {
+      id: 'hb-3',
+      image: '/images/hero/hero-slide-3.jpg',
+      heading: 'For Your Most Beautiful Beginning — Gold & Crimson Set',
+      description: 'Experience unmatched grandeur with rich crimson velvet trim, intricate gold floral motifs, and royal satin pillow shams.',
+      ctaText: 'Shop Crimson Bridal',
+      ctaLink: '/shop?category=Bridal%20Bedcover%208%20Pieces%20Set',
+      isActive: true
+    },
+    {
+      id: 'hb-4',
+      image: '/images/hero/hero-slide-4.jpg',
+      heading: 'Light. Breathable. Beautiful. For Brighter, Cooler Days.',
+      description: 'Stay cool through warm summer nights with 100% pure combed cotton bedsheets adorned with soft sage green botanical prints.',
+      ctaText: 'Shop Summer Cotton',
+      ctaLink: '/shop?category=Cotton%20Bedsheets',
+      isActive: true
+    },
+    {
+      id: 'hb-5',
+      image: '/images/hero/hero-slide-5.jpg',
+      heading: 'Warmer. Cozier. Happier Together — Charcoal Plush Mink',
+      description: 'Wrap yourself in ultimate winter warmth with our heavy double-ply plush mink blanket set featuring embossed botanical leaves.',
+      ctaText: 'Shop Winter Mink',
+      ctaLink: '/shop?category=Fleece%20Summer%20Blankets',
       isActive: true
     }
   ],
