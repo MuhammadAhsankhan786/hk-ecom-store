@@ -2,7 +2,7 @@ export type OrderStatus = 'Pending Payment' | 'Paid' | 'Processing' | 'Packed' |
 
 export type PaymentStatus = 'Initiated' | 'Pending' | 'Successful' | 'Failed' | 'Refunded';
 
-export type PaymentProvider = 'Easypaisa' | 'Cash on Delivery' | 'Credit/Debit Card';
+export type PaymentProvider = 'Easypaisa' | 'Cash on Delivery' | 'Credit/Debit Card' | 'Bank Transfer' | 'Meezan Bank';
 
 export type UserRole = 'Super Admin' | 'Store Manager' | 'Inventory Manager';
 

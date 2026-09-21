@@ -477,7 +477,184 @@ export const INITIAL_COLLECTIONS: Collection[] = [
 
 export const INITIAL_INVENTORY_LOGS: InventoryAdjustment[] = [];
 
-export const INITIAL_ORDERS: Order[] = [];
+export const INITIAL_ORDERS: Order[] = [
+  {
+    id: 'ord-101',
+    orderNumber: 'HK-ORD-9821',
+    customerName: 'Muhammad Ahsan Khan',
+    customerEmail: 'ahsan@example.com',
+    customerPhone: '03001234567',
+    shippingAddress: {
+      address: 'House 42, Block C, Gulberg III',
+      city: 'Lahore',
+      province: 'Punjab',
+      postalCode: '54000',
+    },
+    items: [
+      {
+        productId: 'prod-18',
+        productName: 'Ruby Red & Gold Heavy Bridal Bedding Set (10 Pcs)',
+        sku: 'HKF-BR-018',
+        variant: 'King / Ruby Red & Gold',
+        quantity: 1,
+        price: 15999,
+        image: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=600&h=600&fit=crop&auto=format',
+      }
+    ],
+    subtotal: 15999,
+    shippingFee: 0,
+    discount: 0,
+    tax: 0,
+    total: 15999,
+    advancePaymentAmount: 1000,
+    remainingCodAmount: 14999,
+    paymentScreenshot: 'http://res.cloudinary.com/dhpqigvzj/image/upload/v1789898682/collections/tsd3r5igyv8dq8iqj9kn.png',
+    advancePaymentStatus: 'PENDING',
+    paymentMethod: 'Cash on Delivery',
+    paymentStatus: 'Pending',
+    orderStatus: 'Processing',
+    timeline: [
+      {
+        status: 'Processing',
+        timestamp: '2026-09-21 10:15',
+        note: 'Customer placed COD order with PKR 1,000 deposit receipt uploaded.',
+        by: 'Customer'
+      }
+    ],
+    createdAt: '2026-09-21'
+  },
+  {
+    id: 'ord-102',
+    orderNumber: 'HK-ORD-9820',
+    customerName: 'Fatima Malik',
+    customerEmail: 'fatima.m@example.com',
+    customerPhone: '03219876543',
+    shippingAddress: {
+      address: 'Flat 4B, Navy Housing Scheme, DHA Phase 5',
+      city: 'Karachi',
+      province: 'Sindh',
+      postalCode: '75500',
+    },
+    items: [
+      {
+        productId: 'prod-17',
+        productName: 'Maroon Velvet Heavy Bridal Bedding Set (10 Pcs)',
+        sku: 'HKF-BR-017',
+        variant: 'King / Deep Royal Maroon',
+        quantity: 1,
+        price: 14999,
+        image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=600&h=600&fit=crop&auto=format',
+      }
+    ],
+    subtotal: 14999,
+    shippingFee: 0,
+    discount: 0,
+    tax: 0,
+    total: 14999,
+    advancePaymentAmount: 1000,
+    remainingCodAmount: 13999,
+    paymentScreenshot: 'http://res.cloudinary.com/dhpqigvzj/image/upload/v1789898831/collections/hxe08evt6wvhcep4jq2p.png',
+    advancePaymentStatus: 'VERIFIED',
+    paymentMethod: 'Cash on Delivery',
+    paymentStatus: 'Successful',
+    orderStatus: 'Processing',
+    timeline: [
+      {
+        status: 'Processing',
+        timestamp: '2026-09-20 14:30',
+        note: 'Advance payment verified by Admin.',
+        by: 'Admin'
+      }
+    ],
+    createdAt: '2026-09-20'
+  },
+  {
+    id: 'ord-103',
+    orderNumber: 'HK-ORD-9819',
+    customerName: 'Zainab Bibi',
+    customerEmail: 'zainab@example.com',
+    customerPhone: '03335551212',
+    shippingAddress: {
+      address: 'Street 12, F-8/3',
+      city: 'Islamabad',
+      province: 'Federal',
+      postalCode: '44000',
+    },
+    items: [
+      {
+        productId: 'prod-1',
+        productName: 'Premium Digital Printed Bedsheet Set',
+        sku: 'HKF-BS-001',
+        variant: 'King / Floral Printed',
+        quantity: 2,
+        price: 4499,
+        image: 'http://res.cloudinary.com/dhpqigvzj/image/upload/v1789894013/categories/gze4yabunwvv9glyobxz.png',
+      }
+    ],
+    subtotal: 8998,
+    shippingFee: 250,
+    discount: 0,
+    tax: 0,
+    total: 9248,
+    advancePaymentAmount: 1000,
+    remainingCodAmount: 8248,
+    paymentMethod: 'Cash on Delivery',
+    paymentStatus: 'Successful',
+    orderStatus: 'Shipped',
+    timeline: [
+      {
+        status: 'Shipped',
+        timestamp: '2026-09-19 11:00',
+        note: 'Dispatched via TCS Logistics (Tracking: TCS99281)',
+        by: 'Inventory Manager'
+      }
+    ],
+    createdAt: '2026-09-19'
+  },
+  {
+    id: 'ord-104',
+    orderNumber: 'HK-ORD-9818',
+    customerName: 'Usman Chaudhry',
+    customerEmail: 'usman.c@example.com',
+    customerPhone: '03451112233',
+    shippingAddress: {
+      address: 'Main Commercial Area, Satellite Town',
+      city: 'Rawalpindi',
+      province: 'Punjab',
+      postalCode: '46000',
+    },
+    items: [
+      {
+        productId: 'prod-14',
+        productName: 'Royal Velvet Accent Cushions (Set of 2)',
+        sku: 'HKF-CU-002',
+        variant: '18x18" / Royal Sapphire',
+        quantity: 1,
+        price: 2499,
+        image: 'https://images.unsplash.com/photo-1660407761025-539c2dbc1dc6?w=800&h=800&fit=crop&auto=format',
+      }
+    ],
+    subtotal: 2499,
+    shippingFee: 200,
+    discount: 0,
+    tax: 0,
+    total: 2699,
+    advancePaymentAmount: 0,
+    remainingCodAmount: 2699,
+    paymentMethod: 'Bank Transfer',
+    paymentStatus: 'Successful',
+    orderStatus: 'Delivered',
+    timeline: [
+      {
+        status: 'Delivered',
+        timestamp: '2026-09-18 16:45',
+        note: 'Delivered successfully to customer.',
+        by: 'Courier'
+      }
+    ],
+    createdAt: '2026-09-18'
+  }
+];
 
 export const INITIAL_TRANSACTIONS: Transaction[] = [];
 
