@@ -3,14 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
-
-// Import compiled NestJS AppModule from dist build output
-let AppModule: any;
-try {
-  AppModule = require('../dist/src/app.module').AppModule;
-} catch {
-  AppModule = require('../src/app.module').AppModule;
-}
+import { AppModule } from '../src/app.module';
 
 // Ignore unhandled Redis connection errors on serverless environments
 process.on('unhandledRejection', (reason) => {
