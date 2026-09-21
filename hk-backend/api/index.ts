@@ -5,69 +5,81 @@ import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
 import { AppModule } from '../src/app.module';
 
-// Ignore unhandled Redis connection errors on serverless environments
-process.on('unhandledRejection', (reason) => {
-  console.warn('[Vercel Serverless Warning] Unhandled Rejection:', reason);
+const server = express();
+
+// Express CORS Preflight Middleware for Vercel Edge & Serverless
+server.use((req: any, res: any, next: any) => {
+  const origin = req.headers.origin || '*';
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization, x-idempotency-key, X-Requested-With');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  next();
 });
-process.on('uncaughtException', (err) => {
-  console.warn('[Vercel Serverless Warning] Uncaught Exception:', err);
-});
 
-let cachedServer: any;
+let isInitialized = false;
+let initError: any = null;
 
-async function bootstrapServerless() {
-  const expressApp = express();
+async function initNestApp() {
+  if (isInitialized) return;
+  try {
+    const app = await NestFactory.create(
+      AppModule,
+      new ExpressAdapter(server),
+    );
 
-  // Express CORS Preflight Middleware for Vercel Edge & Serverless
-  expressApp.use((req, res, next) => {
-    const origin = req.headers.origin || '*';
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization, x-idempotency-key, X-Requested-With');
+    app.enableCors({
+      origin: true,
+      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+      credentials: true,
+    });
 
-    if (req.method === 'OPTIONS') {
-      return res.status(200).end();
-    }
-    next();
-  });
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        transform: true,
+        forbidNonWhitelisted: false,
+      }),
+    );
 
-  const app = await NestFactory.create(
-    AppModule,
-    new ExpressAdapter(expressApp),
-  );
-
-  app.enableCors({
-    origin: true,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    credentials: true,
-  });
-
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      transform: true,
-      forbidNonWhitelisted: false,
-    }),
-  );
-
-  await app.init();
-  return expressApp;
+    await app.init();
+    isInitialized = true;
+  } catch (err: any) {
+    initError = err;
+    console.error('[NestJS Init Error]', err);
+  }
 }
 
 export default async function handler(req: any, res: any) {
+  const origin = req.headers.origin || '*';
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization, x-idempotency-key, X-Requested-With');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   try {
-    if (!cachedServer) {
-      cachedServer = await bootstrapServerless();
+    await initNestApp();
+    if (initError) {
+      return res.status(500).json({
+        error: 'NestJS Initialization Error',
+        message: initError?.message || String(initError),
+        stack: initError?.stack,
+      });
     }
-    return cachedServer(req, res);
+    return server(req, res);
   } catch (err: any) {
-    console.error('[Vercel Serverless Handler Startup Error]', err);
-    res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.status(500).json({
-      error: 'Vercel Serverless Function Startup Failure',
+    return res.status(500).json({
+      error: 'Vercel Handler Exception',
       message: err?.message || String(err),
+      stack: err?.stack,
     });
   }
 }
