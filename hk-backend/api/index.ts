@@ -13,26 +13,28 @@ process.on('uncaughtException', (err) => {
   console.warn('[Vercel Serverless Warning] Uncaught Exception:', err);
 });
 
-const server = express();
+let cachedServer: any;
 
-// Express CORS Preflight Middleware for Vercel Edge & Serverless
-server.use((req, res, next) => {
-  const origin = req.headers.origin || '*';
-  res.setHeader('Access-Control-Allow-Origin', origin);
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization, x-idempotency-key, X-Requested-With');
+async function bootstrapServerless() {
+  const expressApp = express();
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  next();
-});
+  // Express CORS Preflight Middleware for Vercel Edge & Serverless
+  expressApp.use((req, res, next) => {
+    const origin = req.headers.origin || '*';
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization, x-idempotency-key, X-Requested-With');
 
-export const createExpressServer = async (expressInstance: express.Express) => {
+    if (req.method === 'OPTIONS') {
+      return res.status(200).end();
+    }
+    next();
+  });
+
   const app = await NestFactory.create(
     AppModule,
-    new ExpressAdapter(expressInstance),
+    new ExpressAdapter(expressApp),
   );
 
   app.enableCors({
@@ -50,19 +52,19 @@ export const createExpressServer = async (expressInstance: express.Express) => {
   );
 
   await app.init();
-  return app;
-};
-
-let cachedApp: any;
+  return expressApp;
+}
 
 export default async function handler(req: any, res: any) {
   try {
-    if (!cachedApp) {
-      cachedApp = await createExpressServer(server);
+    if (!cachedServer) {
+      cachedServer = await bootstrapServerless();
     }
-    server(req, res);
+    return cachedServer(req, res);
   } catch (err: any) {
-    console.error('[Vercel Handler Error]', err);
+    console.error('[Vercel Serverless Handler Startup Error]', err);
+    res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.status(500).json({
       error: 'Vercel Serverless Function Startup Failure',
       message: err?.message || String(err),
