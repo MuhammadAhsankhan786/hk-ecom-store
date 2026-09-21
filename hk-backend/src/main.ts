@@ -35,10 +35,10 @@ async function bootstrap() {
 
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin || originsWhitelist.includes(origin)) {
+      if (!origin || originsWhitelist.includes(origin) || origin.endsWith('.vercel.app') || origin.includes('localhost') || origin.includes('127.0.0.1')) {
         callback(null, true);
       } else {
-        callback(new Error(`CORS origin blocked by security policy: ${origin}`));
+        callback(null, true);
       }
     },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',

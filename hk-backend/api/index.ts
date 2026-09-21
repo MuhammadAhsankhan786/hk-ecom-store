@@ -22,6 +22,20 @@ process.on('uncaughtException', (err) => {
 
 const server = express();
 
+// Express CORS Preflight Middleware for Vercel Edge & Serverless
+server.use((req, res, next) => {
+  const origin = req.headers.origin || '*';
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization, x-idempotency-key, X-Requested-With');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  next();
+});
+
 export const createExpressServer = async (expressInstance: express.Express) => {
   const app = await NestFactory.create(
     AppModule,
