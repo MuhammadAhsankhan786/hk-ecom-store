@@ -162,10 +162,10 @@ const categories = [
 ]
 
 const collections = [
-  { name: 'Wedding Collection', tag: 'Heavy gold zari embroidered 10-piece bridal velvet bed sets', image: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=1200&h=800&fit=crop&q=100&auto=format' },
-  { name: 'Summer Breeze 2026', tag: 'Breathable 100% Egyptian cotton satin digital printed sheets', image: 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=1200&h=800&fit=crop&q=100&auto=format' },
-  { name: 'Winter Warmth', tag: 'Heavy double-ply mink blankets and microgel duvets', image: 'https://images.unsplash.com/photo-1580301762395-21ce84d00bc6?w=1200&h=800&fit=crop&q=100&auto=format' },
-  { name: 'Best Sellers', tag: 'Top customer-rated home textile items across Pakistan', image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=1200&h=800&fit=crop&q=100&auto=format' },
+  { name: 'Royal Bridal Collection', tag: 'Velvet & Satin Heavy Sets with gold zari embroidery', image: 'http://res.cloudinary.com/dhpqigvzj/image/upload/v1789898682/collections/tsd3r5igyv8dq8iqj9kn.png' },
+  { name: 'Summer Cotton Collection', tag: 'Light & breathable 100% Egyptian cotton sheets', image: 'http://res.cloudinary.com/dhpqigvzj/image/upload/v1789898831/collections/hxe08evt6wvhcep4jq2p.png' },
+  { name: 'Winter Mink Collection', tag: 'Warm & cozy double-ply Korean mink plush blankets', image: 'http://res.cloudinary.com/dhpqigvzj/image/upload/v1789898934/collections/obfn6cwswl6dlt2ayygq.png' },
+  { name: 'Bridal Collection', tag: 'Royal bridal sets with heavy embroidery', image: 'http://res.cloudinary.com/dhpqigvzj/image/upload/v1789899077/collections/yhhwmx7nml5tc7xourch.png' },
 ]
 
 const reviewsData = [

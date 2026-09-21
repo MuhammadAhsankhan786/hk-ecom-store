@@ -29,6 +29,29 @@ export interface CartItem extends Product {
 
 export const products: Product[] = [
   {
+    id: '77d28f82-798f-48b1-add6-573b8a3a3d60',
+    name: 'bridal set ',
+    slug: 'bridal-set-',
+    category: 'King Size Duvet Set',
+    price: 15000,
+    oldPrice: 18000,
+    rating: 5.0,
+    reviews: 14,
+    image: 'https://res.cloudinary.com/dhpqigvzj/image/upload/v1789902305/products/ibuxdhgeb1elnffypifm.png',
+    images: [
+      'https://res.cloudinary.com/dhpqigvzj/image/upload/v1789902305/products/ibuxdhgeb1elnffypifm.png'
+    ],
+    badge: 'new',
+    publishedAt: new Date().toISOString(),
+    status: 'PUBLISHED',
+    inStock: true,
+    material: 'Pure Cotton Velvet',
+    sizes: ['King', 'Queen'],
+    colors: ['Ruby Red', 'Gold'],
+    description: 'Custom bridal set testing product.',
+    sku: 'HK-BRD-SET-TEST',
+  },
+  {
     id: '75eca9bc-d43b-42e6-b92b-4369accfce4a',
     name: 'aaa',
     slug: 'aaa',

@@ -427,47 +427,51 @@ export const INITIAL_CATEGORIES: Category[] = [
 export const INITIAL_COLLECTIONS: Collection[] = [
   {
     id: 'col-1',
-    name: 'Wedding Collection',
-    description: 'Heavy gold zari embroidered 10-piece bridal velvet bed sets for grand Pakistani weddings.',
-    image: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=600&h=600&fit=crop&auto=format',
+    name: 'Royal Bridal Collection',
+    slug: 'royal-bridal-collection',
+    description: 'Velvet & Satin Heavy Sets with gold zari embroidery',
+    image: 'http://res.cloudinary.com/dhpqigvzj/image/upload/v1789898682/collections/tsd3r5igyv8dq8iqj9kn.png',
     productsCount: 4,
     sortOrder: 1,
     status: 'Active',
-    seoTitle: 'Pakistani Bridal Bedding Collection | HK Fabric',
-    seoDescription: 'Royal velvet 10-piece wedding bed sets.'
+    seoTitle: 'Royal Bridal Collection | HK Fabric',
+    seoDescription: 'Velvet & Satin Heavy Sets with gold zari embroidery'
   },
   {
     id: 'col-2',
-    name: 'Summer Breeze 2026',
-    description: 'Breathable 100% Egyptian cotton satin digital printed sheets for summer.',
-    image: 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=600&fit=crop&auto=format',
+    name: 'Summer Cotton Collection',
+    slug: 'summer-cotton-collection',
+    description: 'Light & breathable 100% Egyptian cotton sheets',
+    image: 'http://res.cloudinary.com/dhpqigvzj/image/upload/v1789898831/collections/hxe08evt6wvhcep4jq2p.png',
     productsCount: 6,
     sortOrder: 2,
     status: 'Active',
-    seoTitle: 'Summer Bedding Collection | HK Fabric',
-    seoDescription: 'Cool cotton summer sheet sets.'
+    seoTitle: 'Summer Cotton Collection | HK Fabric',
+    seoDescription: 'Light & breathable 100% Egyptian cotton sheets'
   },
   {
     id: 'col-3',
-    name: 'Winter Warmth',
-    description: 'Heavy double-ply mink blankets and royal indigo microgel duvets.',
-    image: 'https://images.unsplash.com/photo-1580301762395-21ce84d00bc6?w=600&h=600&fit=crop&auto=format',
+    name: 'Winter Mink Collection',
+    slug: 'winter-mink-collection',
+    description: 'Warm & cozy double-ply Korean mink plush blankets',
+    image: 'http://res.cloudinary.com/dhpqigvzj/image/upload/v1789898934/collections/obfn6cwswl6dlt2ayygq.png',
     productsCount: 5,
     sortOrder: 3,
     status: 'Active',
-    seoTitle: 'Winter Blanket & Duvet Collection | HK Fabric',
-    seoDescription: 'Thermal winter blankets and comforters.'
+    seoTitle: 'Winter Mink Collection | HK Fabric',
+    seoDescription: 'Warm & cozy double-ply Korean mink plush blankets'
   },
   {
     id: 'col-4',
-    name: 'Best Sellers',
-    description: 'Top customer-rated home textile items across Pakistan.',
-    image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=600&h=600&fit=crop&auto=format',
+    name: 'Bridal Collection',
+    slug: 'bridal-collection',
+    description: 'Royal bridal sets with heavy embroidery',
+    image: 'http://res.cloudinary.com/dhpqigvzj/image/upload/v1789899077/collections/yhhwmx7nml5tc7xourch.png',
     productsCount: 8,
     sortOrder: 4,
     status: 'Active',
-    seoTitle: 'Best Selling Bedding in Pakistan | HK Fabric',
-    seoDescription: 'Most loved HK Fabric home textiles.'
+    seoTitle: 'Bridal Collection | HK Fabric',
+    seoDescription: 'Royal bridal sets with heavy embroidery'
   }
 ];
 
