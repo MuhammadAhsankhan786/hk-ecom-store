@@ -3,7 +3,6 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
-import { AppModule } from '../src/app.module';
 
 const server = express();
 
@@ -24,9 +23,23 @@ server.use((req: any, res: any, next: any) => {
 let isInitialized = false;
 let initError: any = null;
 
+function loadAppModule() {
+  try {
+    return require('../dist/src/app.module').AppModule;
+  } catch (err1) {
+    try {
+      return require('../src/app.module').AppModule;
+    } catch (err2) {
+      console.error('[NestJS AppModule Load Error]', err1, err2);
+      throw err1;
+    }
+  }
+}
+
 async function initNestApp() {
   if (isInitialized) return;
   try {
+    const AppModule = loadAppModule();
     const app = await NestFactory.create(
       AppModule,
       new ExpressAdapter(server),
@@ -69,17 +82,17 @@ export default async function handler(req: any, res: any) {
     await initNestApp();
     if (initError) {
       return res.status(200).json({
-        success: true,
-        message: 'NestJS edge fallback active',
-        data: [],
+        status: 'online',
+        message: 'HK Fabric Backend Edge API Active',
+        error: initError?.message || String(initError),
       });
     }
     return server(req, res);
   } catch (err: any) {
     return res.status(200).json({
-      success: true,
-      message: 'Vercel edge handler active',
-      data: [],
+      status: 'online',
+      message: 'HK Fabric Serverless Edge Active',
+      error: err?.message || String(err),
     });
   }
 }
