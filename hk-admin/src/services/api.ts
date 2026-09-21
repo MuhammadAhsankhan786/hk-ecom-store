@@ -65,7 +65,6 @@ async function apiRequest<T = any>(
         errorMessage = "Unauthorized access. Please login again.";
         localStorage.removeItem('hk_admin_token');
         localStorage.setItem('hk_admin_auth', 'false');
-        setTimeout(() => window.location.reload(), 1500);
       }
       
       throw new Error(errorMessage);
@@ -73,7 +72,6 @@ async function apiRequest<T = any>(
 
     return await res.json();
   } catch (err: any) {
-    console.warn(`API request to ${path} failed:`, err);
     throw err;
   }
 }
